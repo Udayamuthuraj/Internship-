@@ -23,7 +23,10 @@ import AlumniDashboard from "./pages/alumni/AlumniDashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminRegister from "./pages/admin/AdminRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import EventPage from "./pages/Events"; 
+
+//other pages
+import EventPage from "./pages/Events";
+
 function App() {
   return (
     <Router>
@@ -47,6 +50,9 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        
+        {/*event route */}
+        <Route path= "/events" element ={<EventPage/>} />
       </Routes>
     </Router>
   );
