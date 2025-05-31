@@ -174,9 +174,9 @@ const WelcomePage = () => {
           <span>University Of Madras</span>
         </div>
         <ul className="flex space-x-6 font-semibold text-[#930911]">
-          <li><a href="#events" className="hover:text-[#BA3D47]">Events</a></li>
-          <li><a href="#gallery" className="hover:text-[#BA3D47]">Gallery</a></li>
-          <li><a href="#about" className="hover:text-[#BA3D47]">About</a></li>
+          <li><a href="/events" className="hover:text-[#BA3D47]">Events</a></li>
+          <li><a href="/gallery" className="hover:text-[#BA3D47]">Gallery</a></li>
+          <li><a href="/about" className="hover:text-[#BA3D47]">About</a></li>
           <li><a href="/admin" className="hover:text-[#BA3D47]">Admin</a></li>
         </ul>
       </motion.nav>
@@ -203,7 +203,7 @@ const WelcomePage = () => {
             <a href="/student/Register" className="bg-[#930911] hover:bg-[#BA3D47] text-white px-10 py-5 rounded-2xl text-xl font-bold transition inline-block">
               Join as Student
             </a>
-            <a href="/alumni" className="bg-white text-[#930911] hover:bg-[#FFE9D4] px-10 py-5 rounded-2xl text-xl font-bold border border-[#930911] transition inline-block">
+            <a href="/alumni/Register" className="bg-white text-[#930911] hover:bg-[#FFE9D4] px-10 py-5 rounded-2xl text-xl font-bold border border-[#930911] transition inline-block">
               Explore Alumni
             </a>
           </div>
