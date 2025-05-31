@@ -5,10 +5,14 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Welcome from "./pages/Welcome";
 
+
 // Student pages
 import StudentLogin from "./pages/student/StudentLogin";
 import StudentRegister from "./pages/student/StudentRegister";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentHome from "./pages/student/StudentHome";
+import StudentSearch from "./pages/student/StudentSearch";
+import StudentProfile from "./pages/student/StudentProfile";
 
 // Alumni pages
 import AlumniLogin from "./pages/alumni/AlumniLogin";
@@ -21,7 +25,11 @@ import AlumniEditProfile from "./pages/alumni/AlumniEditProfile";
 
 // Admin pagesLog
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminRegister from "./pages/admin/AdminRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+
+//other pages
+import EventPage from "./pages/Events";
 
 function App() {
   return (
@@ -48,6 +56,9 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        
+        {/*event route */}
+        <Route path= "/events" element ={<EventPage/>} />
       </Routes>
     </Router>
   );
