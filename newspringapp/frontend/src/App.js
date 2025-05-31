@@ -14,8 +14,12 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import AlumniLogin from "./pages/alumni/AlumniLogin";
 import AlumniRegister from "./pages/alumni/AlumniRegister";
 import AlumniDashboard from "./pages/alumni/AlumniDashboard";
+import AlumniSearch from "./pages/alumni/AlumniSearch";
+import AlumniPost from "./pages/alumni/AlumniPost";
+import AlumniProfile from "./pages/alumni/AlumniProfile";
+import AlumniEditProfile from "./pages/alumni/AlumniEditProfile";
 
-// Admin pages
+// Admin pagesLog
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
@@ -29,12 +33,17 @@ function App() {
         {/* Student Routes */}
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/register" element={<StudentRegister />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/StudentDashboard" element={<StudentDashboard />} />
 
         {/* Alumni Routes */}
         <Route path="/alumni/login" element={<AlumniLogin />} />
         <Route path="/alumni/register" element={<AlumniRegister />} />
         <Route path="/alumni/dashboard" element={<AlumniDashboard />} />
+        <Route path="/alumni/search" element={<AlumniSearch />} />
+        <Route path="/alumni/post" element={<AlumniPost />} />
+        <Route path="/alumni/profile" element={<AlumniProfile />} />
+        <Route path="/alumni/editprofile" element={<AlumniEditProfile />} />
+        <Route path="/pages/welcome" element={<Welcome />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
