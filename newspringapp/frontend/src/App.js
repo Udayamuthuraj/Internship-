@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Welcome from "./pages/Welcome";
 
+
 // Student pages
 import StudentLogin from "./pages/student/StudentLogin";
 import StudentRegister from "./pages/student/StudentRegister";
@@ -22,7 +23,7 @@ import AlumniDashboard from "./pages/alumni/AlumniDashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminRegister from "./pages/admin/AdminRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-
+import EventPage from "./pages/Events"; 
 function App() {
   return (
     <Router>
@@ -46,7 +47,6 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path = "/admin/register" element = {<AdminRegister/>}/>
       </Routes>
     </Router>
   );
