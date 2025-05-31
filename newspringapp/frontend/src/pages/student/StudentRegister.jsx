@@ -164,11 +164,13 @@ const StudentRegister = () => {
                   Register
                 </button>
               </form>
-              <p className="mt-6 text-center text-sm text-gray-600">
+
+              {/* Enhanced Visibility for Login Prompt */}
+              <p className="mt-8 text-center text-base font-medium text-gray-700 bg-white/60 rounded-xl px-4 py-3 shadow-md hover:shadow-lg transition-all duration-300">
                 Already have an account?{" "}
                 <Link
                   to="/student/login"
-                  className="text-[#930911] font-medium hover:underline"
+                  className="text-[#930911] font-bold underline hover:text-[#BA3D47] transition"
                 >
                   Login here
                 </Link>
