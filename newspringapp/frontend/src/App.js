@@ -10,12 +10,16 @@ import AlumniRegister from "./pages/alumni/AlumniRegister";
 import AlumniDashboard from "./pages/alumni/AlumniDashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import FacultyDetail from "./pages/FacultyDetail";  // <-- New import
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Welcome />} />
+
+        {/* Faculty Detail Route */}
+        <Route path="/faculty/:id" element={<FacultyDetail />} />
 
         {/* Student */}
         <Route path="/student/login" element={<StudentLogin />} />
