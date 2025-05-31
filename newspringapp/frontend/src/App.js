@@ -9,6 +9,9 @@ import Welcome from "./pages/Welcome";
 import StudentLogin from "./pages/student/StudentLogin";
 import StudentRegister from "./pages/student/StudentRegister";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentHome from "./pages/student/StudentHome";
+import StudentSearch from "./pages/student/StudentSearch";
+import StudentProfile from "./pages/student/StudentProfile";
 
 // Alumni pages
 import AlumniLogin from "./pages/alumni/AlumniLogin";
@@ -17,6 +20,7 @@ import AlumniDashboard from "./pages/alumni/AlumniDashboard";
 
 // Admin pages
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminRegister from "./pages/admin/AdminRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
@@ -30,6 +34,9 @@ function App() {
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/register" element={<StudentRegister />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/home" element={<StudentHome />} />
+        <Route path="/student/search" element={<StudentSearch />} />
+        <Route path="/student/profile" element={<StudentProfile />} />
 
         {/* Alumni Routes */}
         <Route path="/alumni/login" element={<AlumniLogin />} />
@@ -39,6 +46,7 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path = "/admin/register" element = {<AdminRegister/>}/>
       </Routes>
     </Router>
   );
