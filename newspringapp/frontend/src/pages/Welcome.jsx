@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+
 import { FaInstagram, FaTwitter, FaEnvelope, FaRobot, FaTimes, FaCommentDots } from 'react-icons/fa'; // FaCommentDots imported
 import { motion, AnimatePresence } from 'framer-motion'; // AnimatePresence imported
 import { Link } from 'react-router-dom';
@@ -73,6 +74,9 @@ const WelcomePage = () => {
   const [feedbackList, setFeedbackList] = useState([]); // State to store fetched feedback
   const [feedbackSuccess, setFeedbackSuccess] = useState(false); // To trigger refetch of feedback after submission
 
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
+  
   useEffect(() => {
     let start = 0;
     const duration = 2000;
@@ -137,12 +141,13 @@ const WelcomePage = () => {
         body: JSON.stringify(feedback),
       });
       if (response.ok) {
-        alert("Feedback submitted successfully!");
-        setFeedback({ name: '', email: '', message: '' });
-        setFeedbackSuccess(prev => !prev); // Toggle to trigger useEffect for refetch
-      } else {
-        alert("Failed to submit feedback.");
-      }
+  setShowSuccessPopup(true);          // Show popup
+  setFeedback({ name: '', email: '', message: '' });  // Clear form
+  setFeedbackSuccess(prev => !prev); // Trigger refetch
+} else {
+  alert("Failed to submit feedback.");
+}
+
     } catch (error) {
       alert("Error submitting feedback. Please try again.");
     }
@@ -155,6 +160,7 @@ const WelcomePage = () => {
         backgroundImage: `url(${backgroundImage})`,
         fontFamily: "'Figtree', sans-serif",
       }}
+
     >
       {/* Navbar */}
       <motion.nav
@@ -256,9 +262,19 @@ const WelcomePage = () => {
       <section id="about" className="py-16 text-center bg-white bg-opacity-30 backdrop-blur-sm rounded-xl max-w-5xl mx-auto shadow-lg">
         <h3 className="text-3xl font-semibold text-[#930911] mb-4">About This Portal</h3>
         <p className="text-xl text-[#333] px-6">
-          CSITAA is the official alumni portal of the Department of Computer Science & IT,
-          University of Madras. This platform bridges the gap between current students and alumni,
-          fostering mentorship, collaboration, and lasting relationships.
+          CSITAA is the official alumni portal of the Department of Computer Science & IT, University of Madras. 
+        </p>
+        <p className="text-xl text-[#333] px-6">
+          This platform bridges the gap between current students and alumni, fostering mentorship, collaboration, and lasting relationships.
+        </p>
+        <p className="text-xl text-[#333] px-6">
+          Through CSITAA, we aim to build a vibrant and interactive community where alumni can stay connected with their alma mater and contribute meaningfully to its growth.
+        </p>
+        <p className="text-xl text-[#333] px-6">
+          The portal provides students with access to a wealth of experience, guidance, and opportunities from graduates who have excelled in various industries across the globe.
+        </p>
+        <p className="text-xl text-[#333] px-6">
+          Whether you're a student seeking career advice, an alumnus looking to give back, or a faculty member wanting to share department updates — CSITAA serves as the central hub for communication, knowledge-sharing, and professional networking
         </p>
       </section>
 
@@ -305,7 +321,7 @@ const WelcomePage = () => {
         <div className="flex justify-center gap-10 text-3xl text-[#930911]">
           {/* These are your social media icons, untouched as per your original code */}
           <a href="mailto:csitaa@university.edu" className="hover:text-[#BA3D47] transition"><FaEnvelope /></a>
-          <a href="https://www.instagram.com/csitaa/" className="hover:text-[#BA3D47] transition"><FaInstagram /></a>
+          <a href="https://www.instagram.com/_csitaa_/" className="hover:text-[#BA3D47] transition"><FaInstagram /></a>
           <a href="https://twitter.com/CSITAA" className="hover:text-[#BA3D47] transition"><FaTwitter /></a>
         </div>
       </section>
@@ -410,6 +426,7 @@ const WelcomePage = () => {
         )}
       </AnimatePresence>
 
+
 {/* Feedback Display Modal */}
 <AnimatePresence>
   {feedbackDisplayOpen && (
@@ -460,6 +477,33 @@ const WelcomePage = () => {
             ))}
           </ul>
         )}
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {showSuccessPopup && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.75 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.75 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-60"
+      onClick={() => setShowSuccessPopup(false)} // Close on clicking outside
+    >
+      <motion.div
+        className="bg-white rounded-lg p-8 max-w-sm mx-4 text-center shadow-lg"
+        onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside popup
+      >
+        <h2 className="text-2xl font-semibold mb-4 text-[#930911]">Thank You!</h2>
+        <p className="mb-6">Your feedback has been submitted successfully.</p>
+        <button
+          onClick={() => setShowSuccessPopup(false)}
+          className="bg-[#930911] text-white px-6 py-2 rounded hover:bg-[#BA3D47] transition"
+        >
+          Close
+        </button>
       </motion.div>
     </motion.div>
   )}
