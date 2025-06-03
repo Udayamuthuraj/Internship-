@@ -56,6 +56,11 @@ function App() {
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
+<<<<<<< HEAD
+=======
+        <Route path="/admin/register" element={<AdminRegister />} />
+
+>>>>>>> aa5ea29 (Initial commit)
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         
         {/*event route */}

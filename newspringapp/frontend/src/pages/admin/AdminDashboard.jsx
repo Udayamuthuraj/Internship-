@@ -1,4 +1,15 @@
+<<<<<<< HEAD
 import React, { useState } from "react";
+=======
+import React, { useState, Suspense, lazy } from "react";
+
+// Lazy load admin subpages for better performance
+const ManageEvents = lazy(() => import("./ManageEvents"));
+const ManageGallery = lazy(() => import("./ManageGallery"));
+const ViewStats = lazy(() => import("./ViewStats"));
+const ManageMembers = lazy(() => import("./ManageMembers"));
+const EmailBroadcast = lazy(() => import("./EmailBroadcast"));
+>>>>>>> aa5ea29 (Initial commit)
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("events");
@@ -55,6 +66,7 @@ const AdminDashboard = () => {
       </aside>
 
       {/* Main content */}
+<<<<<<< HEAD
       <main className="flex-grow p-10 bg-white">
         {activeTab === "events" && (
           <section>
@@ -100,9 +112,23 @@ const AdminDashboard = () => {
             <p>Send emails to all registered alumni and students.</p>
           </section>
         )}
+=======
+      <main className="flex-grow p-10 bg-white overflow-auto">
+        <Suspense fallback={<p>Loading...</p>}>
+          {activeTab === "events" && <ManageEvents />}
+          {activeTab === "gallery" && <ManageGallery />}
+          {activeTab === "stats" && <ViewStats />}
+          {activeTab === "members" && <ManageMembers />}
+          {activeTab === "email" && <EmailBroadcast />}
+        </Suspense>
+>>>>>>> aa5ea29 (Initial commit)
       </main>
     </div>
   );
 };
 
+<<<<<<< HEAD
 export default AdminDashboard;
+=======
+export default AdminDashboard;
+>>>>>>> aa5ea29 (Initial commit)
