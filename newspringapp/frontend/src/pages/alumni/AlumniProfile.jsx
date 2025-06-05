@@ -98,7 +98,7 @@ const AlumniProfile = () => {
     // In a real application, you would clear user session/token here
     console.log("Logging out from AlumniProfile...");
     setIsLogoutModalOpen(false); // Close the modal
-    navigate('/pages/welcome'); // Redirect to Welcome.jsx
+    navigate('/'); // Redirect to Welcome.jsx
   };
 
   return (
