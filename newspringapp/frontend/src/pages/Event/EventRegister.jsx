@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import bgImage from "../assets/unom.jpg";
+import bgImage from '../../assets/unom.jpg';
 import axios from "axios";
 
 const EventRegister = () => {

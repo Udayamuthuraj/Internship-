@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import bgImage from "../assets/unom.jpg";
+import bgImage from '../../assets/unom.jpg';
 
 const EventPage = () => {
   const [events, setEvents] = useState([]);

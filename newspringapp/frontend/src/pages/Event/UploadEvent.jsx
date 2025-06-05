@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import bgImage from '../assets/unom.jpg'; // Correct import path based on your structure
+import bgImage from '../../assets/unom.jpg'; // Correct import path based on your structure
 
 const UploadEvent = () => {
   const [formData, setFormData] = useState({
