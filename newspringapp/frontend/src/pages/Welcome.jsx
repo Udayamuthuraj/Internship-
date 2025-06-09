@@ -177,7 +177,7 @@ const WelcomePage = () => {
           <li><a href="/events" className="hover:text-[#BA3D47]">Events</a></li>
           <li><a href="/gallery" className="hover:text-[#BA3D47]">Gallery</a></li>
           <li><a href="/about" className="hover:text-[#BA3D47]">About</a></li>
-          <li><a href="/admin" className="hover:text-[#BA3D47]">Admin</a></li>
+          <li><a href="/admin/Login" className="hover:text-[#BA3D47]">Admin</a></li>
         </ul>
       </motion.nav>
 

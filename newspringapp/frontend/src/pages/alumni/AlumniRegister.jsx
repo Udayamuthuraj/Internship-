@@ -2,19 +2,35 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home } from "lucide-react";
-import universityBg from "../../assets/unomstu1.jpg";
+import axios from "axios"; // Import axios for API calls
+import universityBg from "../../assets/unomstu1.jpg"; // Ensure this path is correct
 
 const AlumniRegister = () => {
-  const [showForm, setShowForm] = useState(false);
-  const [email, setEmail] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [details, setDetails] = useState({
-    name: "",
+  // State to hold all form data, including OTP
+  const [formData, setFormData] = useState({
+    username: "",
     department: "",
     batch: "",
+    email: "",
+    otp: "", // OTP field is part of formData now
     password: "",
   });
+
+  // State to manage the registration flow steps
+  // 'initial': User enters all details, clicks Register to send OTP
+  // 'otp_sent': OTP has been sent, user needs to enter OTP and click Register to verify
+  // 'otp_verified': OTP verified, user clicks Register to complete registration
+  const [currentStep, setCurrentStep] = useState('initial');
+
+  // State for displaying messages to the user
+  const [message, setMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  // Loading states for buttons
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [showForm, setShowForm] = useState(false); // For animation
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,30 +40,90 @@ const AlumniRegister = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSendOTP = () => {
-    if (!email) return;
-    setOtpSent(true);
-    alert("OTP sent to your email.");
+  // Handle changes to form inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleRegister = (e) => {
+  // Main handler for the single "Register" button
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex =
-      /^(?=.[a-z])(?=.[A-Z])(?=.\d)(?=.[@$!%?#&])[A-Za-z\d@$!%?#&]{8,}$/;
+    setMessage(''); // Clear previous messages
+    setIsLoading(true); // Disable button during processing
 
-    if (!emailRegex.test(email)) {
-      alert("Enter a valid email.");
-      return;
-    }
-    if (!passwordRegex.test(details.password)) {
-      alert(
-        "Password must be 8+ characters, contain upper/lowercase, number, special char."
-      );
-      return;
-    }
+    try {
+      if (currentStep === 'initial') {
+        // Step 1: Request OTP
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          setMessage("Please enter a valid email address.");
+          setIsSuccess(false);
+          setIsLoading(false);
+          return;
+        }
 
-    alert("🎉 Registered successfully!");
+        const response = await axios.post('/api/alumni/request-otp', { email: formData.email });
+        setMessage(response.data.message || 'OTP sent to your email.');
+        setIsSuccess(true);
+        setCurrentStep('otp_sent'); // Move to next step
+        console.log('OTP Request Success:', response.data);
+
+      } else if (currentStep === 'otp_sent') {
+        // Step 2: Verify OTP
+        if (!formData.otp) {
+          setMessage("Please enter the OTP.");
+          setIsSuccess(false);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await axios.post('/api/alumni/verify-otp', { email: formData.email, otp: formData.otp });
+        setMessage(response.data.message || 'OTP verified successfully! Click Register to complete.');
+        setIsSuccess(true);
+        setCurrentStep('otp_verified'); // Move to next step
+        console.log('OTP Verification Success:', response.data);
+
+      } else if (currentStep === 'otp_verified') {
+        // Step 3: Complete Registration
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+          setMessage("Password must be 8+ characters, contain upper/lowercase, number, and special char.");
+          setIsSuccess(false);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await axios.post('/api/alumni/register', formData); // Send all form data
+        setMessage(response.data.message || 'Registration successful!');
+        setIsSuccess(true);
+        console.log('Registration Success:', response.data);
+
+        // Navigate to login page after a short delay
+        setTimeout(() => {
+          navigate("/alumni/login"); // Ensure '/login' route is defined in App.js
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Operation failed:', error.response ? error.response.data : error.message);
+      setMessage(error.response?.data?.message || 'An error occurred. Please try again.');
+      setIsSuccess(false);
+    } finally {
+      setIsLoading(false); // Re-enable button
+    }
+  };
+
+  // Determine button text based on current step
+  const getButtonText = () => {
+    if (isLoading) {
+      if (currentStep === 'initial') return 'Sending OTP...';
+      if (currentStep === 'otp_sent') return 'Verifying OTP...';
+      if (currentStep === 'otp_verified') return 'Registering...';
+    }
+    if (currentStep === 'initial') return 'Send OTP & Register';
+    if (currentStep === 'otp_sent') return 'Verify OTP & Register';
+    if (currentStep === 'otp_verified') return 'Complete Registration';
+    return 'Register'; // Default
   };
 
   return (
@@ -80,94 +156,96 @@ const AlumniRegister = () => {
               <h2 className="text-4xl font-bold text-center text-[#930911] mb-8">
                 Alumni Register
               </h2>
-              <form onSubmit={handleRegister} className="space-y-5">
+
+              {/* Message Display Area */}
+              {message && (
+                <div className={`alert ${isSuccess ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} text-center mb-4 p-2 rounded`}>
+                  {message}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Always visible fields */}
                 <input
                   type="text"
-                  placeholder="Full Name"
+                  placeholder="Username"
                   className="input-style"
-                  value={details.name}
-                  onChange={(e) =>
-                    setDetails({ ...details, name: e.target.value })
-                  }
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
                   required
+                  disabled={currentStep !== 'initial' && currentStep !== 'otp_verified'} // Disable after OTP sent, re-enable if verified
                 />
                 <input
                   type="text"
                   placeholder="Department"
                   className="input-style"
-                  value={details.department}
-                  onChange={(e) =>
-                    setDetails({ ...details, department: e.target.value })
-                  }
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
                   required
+                  disabled={currentStep !== 'initial' && currentStep !== 'otp_verified'}
                 />
                 <input
                   type="text"
-                  placeholder="Batch (e.g., 2020-2022)"
+                  placeholder="Batch (e.g., 2020)"
                   className="input-style"
-                  value={details.batch}
-                  onChange={(e) =>
-                    setDetails({ ...details, batch: e.target.value })
-                  }
+                  name="batch"
+                  value={formData.batch}
+                  onChange={handleChange}
                   required
+                  disabled={currentStep !== 'initial' && currentStep !== 'otp_verified'}
                 />
                 <input
                   type="email"
                   placeholder="Email"
                   className="input-style"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   required
+                  disabled={currentStep !== 'initial'} // Disable email input after OTP sent
                 />
 
-                <div className="flex gap-3">
+                {/* OTP input field - only visible after OTP is sent */}
+                {currentStep !== 'initial' && (
                   <input
                     type="text"
                     placeholder="Enter OTP"
-                    className={`input-style flex-1 ${
-                      !otpSent ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    disabled={!otpSent}
+                    className="input-style"
+                    name="otp"
+                    value={formData.otp}
+                    onChange={handleChange}
+                    required
+                    disabled={currentStep === 'otp_verified'} // Disable OTP input once verified
+                  />
+                )}
+
+                {/* Password field - only visible after OTP is verified */}
+                {currentStep === 'otp_verified' && (
+                  <input
+                    type="password"
+                    placeholder="Create Password"
+                    className="input-style"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={handleSendOTP}
-                    disabled={!email}
-                    className={`px-4 py-2 rounded-lg font-semibold text-white transition duration-300 ${
-                      email
-                        ? "bg-[#930911] hover:bg-[#BA3D47]"
-                        : "bg-gray-300 cursor-not-allowed"
-                    }`}
-                  >
-                    {otpSent ? "Resend" : "Send OTP"}
-                  </button>
-                </div>
-
-                <input
-                  type="password"
-                  placeholder="Create Password"
-                  className="input-style"
-                  value={details.password}
-                  onChange={(e) =>
-                    setDetails({ ...details, password: e.target.value })
-                  }
-                  required
-                />
+                )}
 
                 <button
                   type="submit"
                   className="w-full bg-[#930911] text-white py-3 rounded-lg font-semibold hover:bg-[#BA3D47] transition duration-300"
+                  disabled={isLoading}
                 >
-                  Register
+                  {getButtonText()}
                 </button>
               </form>
               <p className="mt-6 text-center text-sm text-white-600">
                 Already have an account?{" "}
                 <Link
-                  to="/alumni/login"
+                  to="/login"
                   className="text-[#930911] font-medium hover:underline"
                 >
                   Login here

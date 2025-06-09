@@ -2,12 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home } from "lucide-react";
+import axios from "axios";
 import universityBg from "../../assets/unomstu1.jpg";
 
 const AlumniLogin = () => {
   const [showForm, setShowForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,20 +22,47 @@ const AlumniLogin = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setMessage('');
+    setIsSuccess(false);
+    setIsLoading(true);
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      alert("Enter a valid email.");
+      setMessage("Enter a valid email.");
+      setIsSuccess(false);
+      setIsLoading(false);
       return;
     }
     if (!password) {
-      alert("Please enter your password.");
+      setMessage("Please enter your password.");
+      setIsSuccess(false);
+      setIsLoading(false);
       return;
     }
 
-    alert("✅ Login successful!");
-    navigate("/alumni/dashboard"); // Redirect to dashboard on success
+    try {
+      const response = await axios.post('/api/alumni/login', {
+        username: email, // Sending email as username to backend
+        password: password
+      });
+
+      setMessage(response.data.message || "Login successful!");
+      setIsSuccess(true);
+      console.log("Login Success:", response.data);
+
+      setTimeout(() => {
+        navigate("/alumni/dashboard"); // Redirect to dashboard on success
+      }, 1500);
+
+    } catch (error) {
+      console.error("Login failed:", error.response ? error.response.data : error.message);
+      setMessage(error.response?.data?.message || "Login failed. Please check your credentials.");
+      setIsSuccess(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,6 +95,13 @@ const AlumniLogin = () => {
               <h2 className="text-4xl font-bold text-center text-[#930911] mb-8">
                 Alumni Login
               </h2>
+
+              {message && (
+                <div className={`alert ${isSuccess ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} text-center mb-4 p-2 rounded`}>
+                  {message}
+                </div>
+              )}
+
               <form onSubmit={handleLogin} className="space-y-5">
                 <input
                   type="email"
@@ -83,8 +122,9 @@ const AlumniLogin = () => {
                 <button
                   type="submit"
                   className="w-full bg-[#930911] text-white py-3 rounded-lg font-semibold hover:bg-[#BA3D47] transition duration-300"
+                  disabled={isLoading}
                 >
-                  Login
+                  {isLoading ? 'Logging In...' : 'Login'}
                 </button>
               </form>
               <p className="mt-6 text-center text-sm text-white-600">
