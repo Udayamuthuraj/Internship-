@@ -182,17 +182,24 @@ const EventPage = () => {
 
       {/* Image Modal */}
       {modalImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50"
-          onClick={() => setModalImage(null)}
-        >
-          <img
-            src={modalImage}
-            alt="Zoom"
-            className="max-w-3xl max-h-[90vh] rounded-lg shadow-lg"
-          />
-        </div>
-      )}
+  <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center">
+    <div className="relative">
+      {/* Close Button */}
+      <button
+        className="absolute top-0 right-0 mt-2 mr-2 bg-red-600 text-white rounded-full px-3 py-1 text-sm hover:bg-red-700 transition"
+        onClick={() => setModalImage(null)}
+      >
+        ✖
+      </button>
+      {/* Image */}
+      <img
+        src={modalImage}
+        alt="Zoom"
+        className="max-w-3xl max-h-[90vh] rounded-lg shadow-lg"
+      />
+    </div>
+  </div>
+)}
 
       {/* Custom Styles */}
       <style>{`
