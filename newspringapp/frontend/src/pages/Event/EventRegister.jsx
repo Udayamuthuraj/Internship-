@@ -1,39 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import bgImage from '../../assets/unom.jpg';
 
 const EventRegister = () => {
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
-    regNo: "",
-    department: "",
-    course: "",
     batch: "",
-    eventTitle: "",
     role: "Student",
     paymentScreenshot: null,
   });
 
-  const [qrImageUrl, setQrImageUrl] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [events, setEvents] = useState([]);
-
-  useEffect(() => {
-    axios.get("http://localhost:9090/api/events")
-      .then((res) => setEvents(res.data))
-      .catch((err) => console.error("Error fetching events", err));
-  }, []);
-
-  useEffect(() => {
-    const selectedEvent = events.find(e => e.title === formData.eventTitle);
-    if (selectedEvent?.qrCode) {
-      setQrImageUrl(`http://localhost:9090/api/qr/${selectedEvent.qrCode}`);
-    } else {
-      setQrImageUrl("");
-    }
-  }, [formData.eventTitle, events]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -58,18 +36,7 @@ const EventRegister = () => {
     try {
       await axios.post("http://localhost:9090/api/register-event", data);
       setMessage("✅ Registration successful!");
-      setFormData({
-        name: "",
-        email: "",
-        regNo: "",
-        department: "",
-        course: "",
-        batch: "",
-        eventTitle: "",
-        role: "Student",
-        paymentScreenshot: null,
-      });
-      setQrImageUrl("");
+      setFormData({ name: "", batch: "", role: "Student", paymentScreenshot: null });
     } catch (err) {
       setMessage("❌ Registration failed. Try again.");
     } finally {
@@ -80,37 +47,31 @@ const EventRegister = () => {
   return (
     <div className="min-h-screen bg-cover bg-center relative flex items-center justify-center" style={{ backgroundImage: `url(${bgImage})` }}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-0"></div>
-      <div className="relative z-10 bg-white rounded-2xl p-10 max-w-2xl w-full shadow-2xl overflow-y-auto max-h-[95vh]">
-        <h2 className="text-3xl font-bold text-center text-orange-700 mb-6">Event Registration Form</h2>
+      <div className="relative z-10 bg-white rounded-2xl p-10 max-w-md w-full shadow-2xl">
+        <h2 className="text-2xl font-bold text-center text-orange-700 mb-6">Event Registration</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {["name", "email", "regNo", "department", "course", "batch"].map((field) => (
-            <div key={field}>
-              <label className="block font-semibold text-gray-700 capitalize">{field}</label>
-              <input
-                type="text"
-                name={field}
-                value={formData[field]}
-                onChange={handleChange}
-                required={field !== "regNo"}
-                className="w-full p-3 rounded-md border border-gray-300 focus:outline-orange-500"
-              />
-            </div>
-          ))}
+          <div>
+            <label className="block font-semibold text-gray-700">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-md border border-gray-300 focus:outline-orange-500"
+            />
+          </div>
 
           <div>
-            <label className="block font-semibold text-gray-700">Event Title</label>
-            <select
-              name="eventTitle"
-              value={formData.eventTitle}
+            <label className="block font-semibold text-gray-700">Batch</label>
+            <input
+              type="text"
+              name="batch"
+              value={formData.batch}
               onChange={handleChange}
-              className="w-full p-3 rounded-md border border-gray-300 focus:outline-orange-500"
               required
-            >
-              <option value="">Select Event</option>
-              {events.map((event) => (
-                <option key={event.id} value={event.title}>{event.title}</option>
-              ))}
-            </select>
+              className="w-full p-3 rounded-md border border-gray-300 focus:outline-orange-500"
+            />
           </div>
 
           <div>
@@ -126,13 +87,6 @@ const EventRegister = () => {
             </select>
           </div>
 
-          {qrImageUrl && (
-            <div className="text-center">
-              <p className="font-semibold text-gray-800 mb-2">Scan QR to Pay</p>
-              <img src={qrImageUrl} alt="QR Code" className="mx-auto h-40 w-40 object-contain border border-gray-400 rounded" />
-            </div>
-          )}
-
           <div>
             <label className="block font-semibold text-gray-700 mt-4">Upload Payment Screenshot</label>
             <input
@@ -140,8 +94,8 @@ const EventRegister = () => {
               name="paymentScreenshot"
               accept="image/*"
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
               required
+              className="w-full p-2 border border-gray-300 rounded"
             />
           </div>
 

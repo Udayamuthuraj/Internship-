@@ -28,12 +28,7 @@ public class EventRegisterController {
     @PostMapping("/register-event")
     public ResponseEntity<String> registerEvent(
             @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam(required = false) String regNo,
-            @RequestParam String department,
-            @RequestParam String course,
             @RequestParam String batch,
-            @RequestParam String eventTitle,
             @RequestParam String role,
             @RequestParam MultipartFile paymentScreenshot
     ) {
@@ -47,12 +42,7 @@ public class EventRegisterController {
 
             EventRegister register = new EventRegister();
             register.setName(name);
-            register.setEmail(email);
-            register.setRegNo(regNo);
-            register.setDepartment(department);
-            register.setCourse(course);
             register.setBatch(batch);
-            register.setEventTitle(eventTitle);
             register.setRole(role);
             register.setPaymentScreenshotPath(filename);
 
@@ -66,10 +56,10 @@ public class EventRegisterController {
         }
     }
 
-    @GetMapping("/qr/{filename:.+}")
-    public ResponseEntity<Resource> getQrCode(@PathVariable String filename) {
+    @GetMapping("/payment-screenshot/{filename:.+}")
+    public ResponseEntity<Resource> getScreenshot(@PathVariable String filename) {
         try {
-            Path filePath = Paths.get("uploads").resolve(filename).normalize();
+            Path filePath = Paths.get("uploads/payment-screenshots").resolve(filename).normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists()) {
