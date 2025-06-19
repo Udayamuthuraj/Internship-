@@ -1,6 +1,7 @@
 package com.example.demo.controller.Eventcontroller;
 
 import com.example.demo.model.Eventmodel.EventRegister;
+import com.example.demo.repository.Eventrepository.EventRepository;
 import com.example.demo.service.Eventservice.EventRegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -14,22 +15,30 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:3000")
 public class EventRegisterController {
 
-    @Autowired
-    private EventRegisterService service;
-
     private final String UPLOAD_DIR = "uploads/payment-screenshots/";
 
+    @Autowired
+    private EventRegisterService registerService;
+
+    @Autowired
+    private EventRepository eventRepository; // ✅ Using your EventRepository
+
+    // ✅ Register endpoint
     @PostMapping("/register-event")
     public ResponseEntity<String> registerEvent(
             @RequestParam String name,
             @RequestParam String batch,
             @RequestParam String role,
+            @RequestParam String course,
+            @RequestParam String eventTitle,
             @RequestParam MultipartFile paymentScreenshot
     ) {
         try {
@@ -44,9 +53,11 @@ public class EventRegisterController {
             register.setName(name);
             register.setBatch(batch);
             register.setRole(role);
+            register.setCourse(course);
+            register.setEventTitle(eventTitle);
             register.setPaymentScreenshotPath(filename);
 
-            service.save(register);
+            registerService.save(register);
             return ResponseEntity.ok("Registration successful");
 
         } catch (IOException e) {
@@ -56,10 +67,11 @@ public class EventRegisterController {
         }
     }
 
+    // ✅ Serve payment screenshot if needed
     @GetMapping("/payment-screenshot/{filename:.+}")
     public ResponseEntity<Resource> getScreenshot(@PathVariable String filename) {
         try {
-            Path filePath = Paths.get("uploads/payment-screenshots").resolve(filename).normalize();
+            Path filePath = Paths.get(UPLOAD_DIR).resolve(filename).normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists()) {
@@ -73,5 +85,13 @@ public class EventRegisterController {
         } catch (MalformedURLException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    // ✅ Return upcoming event titles for the register page
+    @GetMapping("/events/upcoming-titles")
+    public ResponseEntity<List<String>> getUpcomingEventTitles() {
+        LocalDate today = LocalDate.now();
+        List<String> titles = eventRepository.findUpcomingEventTitles(today);
+        return ResponseEntity.ok(titles);
     }
 }

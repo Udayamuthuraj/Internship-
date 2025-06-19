@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Collection;
 
 @Service
 public class EventService {
@@ -53,5 +54,10 @@ public class EventService {
         Files.write(path, file.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
       return originalFilename;
  // You can return just the filename if preferred
+    }
+
+    public Collection<String> getAllEvents() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllEvents'");
     }
 }

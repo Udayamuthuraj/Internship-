@@ -5,9 +5,12 @@ import com.example.demo.service.Eventservice.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
- 
+
+import java.time.LocalDate; // ✅ Import LocalDate
+
 @RestController
 @RequestMapping("/api/events")
+@CrossOrigin(origins = "http://localhost:3000") // Optional: allows frontend to access
 public class EventController {
 
     @Autowired
@@ -29,7 +32,7 @@ public class EventController {
 
         Eventmodel event = new Eventmodel();
         event.setTitle(title);
-        event.setDate(date);
+        event.setDate(LocalDate.parse(date)); // ✅ Convert date string to LocalDate
         event.setTime(time);
         event.setLocation(location);
         event.setOrganizer(organizer);

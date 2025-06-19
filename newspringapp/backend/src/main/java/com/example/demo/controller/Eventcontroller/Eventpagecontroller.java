@@ -77,5 +77,24 @@ public ResponseEntity<Resource> getQRCode(@PathVariable String filename) {
         return ResponseEntity.badRequest().build();
     }
 }
+@GetMapping("/pdf/{filename:.+}")
+public ResponseEntity<Resource> getPDF(@PathVariable String filename) {
+    try {
+        Path filePath = Paths.get("uploads").resolve(filename).normalize();
+        Resource resource = new UrlResource(filePath.toUri());
+
+        if (resource.exists()) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf")  // 👈 Ensure browser treats it as PDF
+                    .body(resource);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+
+    } catch (MalformedURLException e) {
+        return ResponseEntity.badRequest().build();
+    }
+}
 
 }

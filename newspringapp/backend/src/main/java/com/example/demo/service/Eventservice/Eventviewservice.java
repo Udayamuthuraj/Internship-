@@ -1,24 +1,29 @@
 package com.example.demo.service.Eventservice;
+
 import com.example.demo.model.Eventmodel.EventRegister;
-import com.example.demo.repository.Eventrepository.Eventviewrepository;
+import com.example.demo.repository.Eventrepository.EventViewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
-public class Eventviewservice {
+public class EventViewService {
 
     @Autowired
-    private Eventviewrepository repository;
+    private EventViewRepository repository;
 
-    public List<EventRegister> getAll() {
-        return repository.findAll();
+    public List<EventRegister> getLatestEventRegistrations() {
+        return repository.findLatestEventRegistrations();
     }
 
-    public Optional<EventRegister> getById(Long id) {
-        return repository.findById(id);
+    public EventRegister getById(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    public long countByRole(String role) {
+        return repository.findAll().stream()
+                .filter(r -> r.getRole().equalsIgnoreCase(role))
+                .count();
     }
 }
-
