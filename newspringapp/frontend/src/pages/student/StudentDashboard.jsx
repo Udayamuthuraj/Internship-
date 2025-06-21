@@ -12,14 +12,18 @@ import backgroundImg from '../../assets/unomstu1.jpg';
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const [greeting, setGreeting] = useState('');
-  const [studentName, setStudentName] = useState('Abinaya'); // You can replace this with dynamic data later
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [studentName, setStudentName] = useState('');
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
+
+    const name = localStorage.getItem('studentName');
+    console.log('Loaded student name from localStorage:', name); // ✅ Debug log
+    if (name) setStudentName(name);
   }, []);
 
   const handleLogout = () => {
@@ -28,6 +32,7 @@ const StudentDashboard = () => {
 
   const confirmLogout = () => {
     setShowLogoutConfirm(false);
+    localStorage.clear(); // ✅ clear token/name on logout
     navigate('/');
   };
 
@@ -46,28 +51,40 @@ const StudentDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 bg-black/30 space-y-6">
-        {/* Greeting Message - Outside the card, large and bold */}
-        <h2 className="text-6xl font-extrabold text-white drop-shadow-md mt-8 mb-4">
-          {greeting}, {studentName}! 
-        </h2>
+      <main className="flex-1 flex flex-col items-center justify-start p-6 bg-black/30 w-full">
+        {/* Greeting */}
+        {greeting && (
+          <h2 className="text-5xl font-bold text-center mt-10 mb-6 drop-shadow-md text-white">
+            {greeting}, {studentName || 'Student'}!
+          </h2>
+        )}
 
-
-        {/* Welcome Card */}
-        <div className="max-w-3xl w-full p-10 rounded-2xl bg-white/20 backdrop-blur-md shadow-xl text-center">
-          <h1 className="text-4xl font-extrabold text-white mb-6">Welcome to CSITTA</h1>
-          <p className="text-lg leading-relaxed text-gray-100">
-            🚀 Here you can:
-            <br />📌 See posts made by alumni
-            <br />🤝 Connect with alumni from various domains and years
-            <br />📝 Edit your profile and upload your resume
-            <br />📅 Register for events & webinars
-            <br />📬 Get important announcements
-          </p>
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-6xl w-full mt-4">
+          <FeatureCard
+            icon={<FaHome className="text-4xl text-orange-400 drop-shadow-[0_0_10px_#fb923c]" />}
+            title="Alumni Posts"
+            description="Browse updates, job openings, and memories shared by alumni."
+          />
+          <FeatureCard
+            icon={<FaEnvelope className="text-4xl text-purple-400 drop-shadow-[0_0_10px_#c084fc]" />}
+            title="Connect"
+            description="Connect with your alumni network."
+          />
+          <FeatureCard
+            icon={<FaSearch className="text-4xl text-blue-400 drop-shadow-[0_0_10px_#60a5fa]" />}
+            title="Search"
+            description="Find and network with alumni."
+          />
+          <FeatureCard
+            icon={<FaUserCircle className="text-4xl text-green-400 drop-shadow-[0_0_10px_#4ade80]" />}
+            title="Profile"
+            description="Edit info, upload resume, and update your profile."
+          />
         </div>
       </main>
 
-      {/* Logout Confirmation Modal */}
+      {/* Logout Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-xl p-8 w-80 text-center shadow-xl">
@@ -104,6 +121,18 @@ const StudentDashboard = () => {
   );
 };
 
+// Reusable Feature Card component
+const FeatureCard = ({ icon, title, description }) => (
+  <div className="p-8 bg-white/10 border border-gray-400/40 backdrop-blur-lg rounded-3xl text-white shadow-lg hover:scale-105 transition duration-300">
+    <div className="flex items-center space-x-4 mb-4">
+      {icon}
+      <h3 className="text-3xl font-bold">{title}</h3>
+    </div>
+    <p className="text-md text-gray-200">{description}</p>
+  </div>
+);
+
+// Reusable Footer Nav item
 const NavItem = ({ icon, label, onClick }) => (
   <button
     onClick={onClick}

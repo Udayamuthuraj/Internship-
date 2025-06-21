@@ -6,8 +6,7 @@ import { Home } from "lucide-react";
 import universityBg from "../../assets/unomstu1.jpg";
 import {
   registerStudent,
-  checkEmailExists,
-  verifyStudentOtp, // ✅ Import here
+  checkEmailExists, // ✅ Import here
 } from "../../services/studentService";
 import axios from "axios";
 
@@ -40,7 +39,7 @@ const StudentRegister = () => {
       setOtpSent(true);
       alert("✅ OTP sent to your email.");
     } catch (err) {
-      alert("❌ Failed to send OTP.");
+      alert(`❌ Failed to send OTP: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -57,7 +56,8 @@ const StudentRegister = () => {
     }
   } catch (error) {
     console.error("OTP verification error:", error);
-    alert("❌ Something went wrong during verification.");
+    alert(`❌ OTP verification failed: ${error.response?.data?.message || error.message}`);
+
   }
 };
 

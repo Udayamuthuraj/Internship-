@@ -20,16 +20,20 @@ const StudentLogin = () => {
   }, []);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await loginStudent({ email, password }); // 🔁 Calls service function
-      localStorage.setItem("studentName", response.name);       // ✅ Save student name
-      navigate("/student/dashboard");                            // 🔀 Redirect to dashboard
-    } catch (err) {
-      alert("Login failed: " + err);
-    }
-  };
-
+  e.preventDefault();
+  try {
+    const data = await loginStudent({email, password});
+    console.log("Login API response:", data); // ✅ check if name is present
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("studentEmail", data.email);
+    localStorage.setItem("studentName", data.name); // ✅ add this line
+    alert("Login successful!");
+    navigate("/student/dashboard");
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("Invalid email or password");
+  }
+};
 
   return (
     <div

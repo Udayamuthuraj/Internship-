@@ -8,7 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.model.student.Student;
-import com.example.demo.repository.student.StudentRepository; 
+import com.example.demo.repository.student.StudentRepository;
 
 @Service
 public class StudentService {
@@ -17,49 +17,69 @@ public class StudentService {
     private StudentRepository studentRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // Inject encoder
+    private PasswordEncoder passwordEncoder;
 
-    // 🔹 For Registration
+    // Register New Student
     public Student registerStudent(Student student) {
-        if (studentRepository.findByEmail(student.getEmail()) != null) {
+        if (studentRepository.existsByEmail(student.getEmail())) {
             throw new IllegalArgumentException("Email already registered!");
         }
+
         String hashedPassword = passwordEncoder.encode(student.getPassword());
         student.setPassword(hashedPassword);
 
         return studentRepository.save(student);
     }
 
-    // for login validation
+    // Validate Login Credentials
     public Student validateStudent(String email, String rawPassword) {
-    Student student = studentRepository.findByEmail(email);
+        Optional<Student> optionalStudent = studentRepository.findByEmail(email);
 
-    if (student != null && passwordEncoder.matches(rawPassword, student.getPassword())) {
-        return student;
-    } else {
+        if (optionalStudent.isPresent()) {
+            Student student = optionalStudent.get();
+            if (passwordEncoder.matches(rawPassword, student.getPassword())) {
+                return student;
+            }
+        }
         return null;
     }
-}
 
+    // Check if Email Already Exists
+    public boolean checkIfEmailExists(String email) {
+        return studentRepository.existsByEmail(email);
+    }
 
-    // check if email is registered  
-   public boolean checkIfEmailExists(String email) {
-    return studentRepository.findByEmail(email) != null;
-}
-
-
-    // 🔹 Fetch All Students
+    // Get All Students
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
     }
 
-    // 🔹 Get Student by ID
+    // Get Student by ID
     public Optional<Student> getStudentById(Long id) {
         return studentRepository.findById(id);
     }
 
-    // 🔹 Delete Student
+    // Get Student by Email
+    public Optional<Student> getStudentByEmail(String email) {
+        return studentRepository.findByEmail(email);
+    }
+
+    // Delete Student
     public void deleteStudent(Long id) {
         studentRepository.deleteById(id);
+    }
+
+    // Update Student Profile
+    public Student updateStudentProfile(Long id, Student updatedData) {
+        Optional<Student> optionalStudent = studentRepository.findById(id);
+        if (optionalStudent.isEmpty()) {
+            throw new RuntimeException("Student not found");
+        }
+
+        Student student = optionalStudent.get();
+        student.setName(updatedData.getName());
+        student.setDepartment(updatedData.getDepartment());
+        student.setBatch(updatedData.getBatch());
+        return studentRepository.save(student);
     }
 }
