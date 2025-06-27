@@ -1,166 +1,373 @@
-import React, { useState } from 'react'; // Import useState
-import { Home, Plus, LogOut, Camera, Phone, Mail, Facebook, Instagram, Linkedin, Users, Send, Activity, Award, Image } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaFacebookF, FaInstagram, FaLinkedinIn } from 'react-icons/fa'; // Import social media icons
+import { FiCamera } from 'react-icons/fi'; // Import camera icon for background change
+import universityBg from '../../assets/unomstu1.jpg'; // Assuming this path is correct for your background image
 
-// --- LogoutConfirmationModal Component (Defined inline for this file) ---
-// This component displays a confirmation dialog for logout.
+// Logout confirmation modal component
 function LogoutConfirmationModal({ isOpen, onClose, onConfirm }) {
-  // If the modal is not open, don't render anything.
-  if (!isOpen) return null;
-
-  return (
-    // Modal overlay for darkening the background and centering the modal.
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
-      {/* Modal content container */}
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-auto p-6 relative transform transition-all">
-        {/* Modal Header/Message */}
-        <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Confirm Logout</h2>
-        <p className="text-gray-700 text-center mb-6">Are you sure you want to logout?</p>
-
-        {/* Action buttons */}
-        <div className="flex justify-center gap-4">
-          {/* Cancel button */}
-          <button
-            onClick={onClose} // Closes the modal without logging out
-            className="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-full hover:bg-gray-400 transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
-          >
-            Cancel
-          </button>
-          {/* Logout button */}
-          <button
-            onClick={onConfirm} // Triggers the logout action
-            className="px-6 py-2 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-          >
-            Logout
-          </button>
+    if (!isOpen) return null; // Don't render if not open
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-auto p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Confirm Logout</h2>
+                <p className="text-gray-700 text-center mb-6">Are you sure you want to logout?</p>
+                <div className="flex justify-center gap-4">
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-full hover:bg-gray-400 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="px-6 py-2 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition"
+                    >
+                        Logout
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
-// --- End of LogoutConfirmationModal Component ---
 
 const AlumniProfile = () => {
-  const navigate = useNavigate(); // Initialize useNavigate hook
+    const navigate = useNavigate();
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const API_BASE_URL = "http://localhost:8080"; // Base URL for your backend API, adjusted to root
 
-  // State to control the visibility of the logout confirmation modal
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    // Retrieve userId from local storage, convert to integer, or set to null
+    const raw = localStorage.getItem("uid");
+    const userId = raw && raw !== "undefined" && !isNaN(raw) ? parseInt(raw) : null;
 
-  // Corrected profile image URL format
-  const profileImage = "https://placehold.co/150x150/CA5C62/ffffff?text=Photo";
+    // State for user profile data
+    const [userProfile, setUserProfile] = useState({
+        username: "",
+        email: "",
+        profilePhotoUrl: "https://placehold.co/150x150/CA5C62/ffffff?text=Add+Photo", // Default placeholder image
+        currentJob: "",
+        batch: "",
+        department: "",
+        yearsOfExperience: 0,
+        numOfProjects: 0,
+        numOfAwards: 0,
+        contactNumber: "",
+        summary: "",
+        specializations: "",
+        facebookUrl: "",
+        instagramUrl: "",
+        linkedinUrl: "",
+    });
 
-  // Placeholder data for alumni posts
-  const alumniPosts = [
-    { id: 1, imageUrl: "https://placehold.co/100x100/52B788/ffffff?text=Post+1", caption: "Successful project launch!" },
-    { id: 2, imageUrl: "https://placehold.co/100x100/4D9DE0/ffffff?text=Post+2", caption: "Reflecting on my journey." },
-    { id: 3, imageUrl: "https://placehold.co/100x100/F4D35E/ffffff?text=Post+3", caption: "Team outing fun!" },
-    { id: 4, imageUrl: "https://placehold.co/100x100/F05D5E/ffffff?text=Post+4", caption: "New research published." },
-    { id: 5, imageUrl: "https://placehold.co/100x100/5E548E/ffffff?text=Post+5", caption: "Inspiring talk today." },
-    { id: 6, imageUrl: "https://placehold.co/100x100/2B2D42/ffffff?text=Post+6", caption: "Weekend vibes." },
-    { id: 7, imageUrl: "https://placehold.co/100x100/A3E635/ffffff?text=Post+7", caption: "Learning new skills." },
-    { id: 8, imageUrl: "https://placehold.co/100x100/8B5CF6/ffffff?text=Post+8", caption: "Celebrating milestones." },
-  ];
+    const [connections, setConnections] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [activities, setActivities] = useState([]); // This will serve as the "Recent Activities" / "Posts" section
+    const [alumniPosts, setAlumniPosts] = useState([]); // State specifically for alumni's own posts
 
-  // Placeholder data for connections
-  const connections = [
-    { id: 1, name: "Arun Kumar", profile: "https://placehold.co/50x50/3498db/ffffff?text=AK" },
-    { id: 2, name: "Sneha Reddy", profile: "https://placehold.co/50x50/2ecc71/ffffff?text=SR" },
-    { id: 3, name: "Praveen Nair", profile: "https://placehold.co/50x50/e67e22/ffffff?text=PN" },
-    { id: 4, name: "Deepika Sharma", profile: "https://placehold.co/50x50/9b59b6/ffffff?text=DS" },
-    { id: 5, name: "Rahul Singh", profile: "https://placehold.co/50x50/f39c12/ffffff?text=RS" },
-    { id: 6, name: "Priya Patel", profile: "https://placehold.co/50x50/1abc9c/ffffff?text=PP" },
-  ];
+    const [showAllPostsOnProfile, setShowAllPostsOnProfile] = useState(false);
+    const [backgroundImageFile, setBackgroundImageFile] = useState(null);
+    const [displayedBackgroundImage, setDisplayedBackgroundImage] = useState(universityBg); 
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [profileError, setProfileError] = useState(null);
 
-  // Placeholder data for direct messages
-  const directMessages = [
-    { id: 101, sender: "Arun Kumar", lastMessage: "Hey, how are you doing? Let's catch up soon!", timestamp: "5 min ago" },
-    { id: 102, sender: "Sneha Reddy", lastMessage: "Great to connect! Looking forward to collaborating.", timestamp: "1 hour ago" },
-    { id: 103, sender: "Praveen Nair", lastMessage: "Regarding the project proposal...", timestamp: "Yesterday" },
-    { id: 104, sender: "Deepika Sharma", lastMessage: "Can you share the notes from the last alumni meet?", timestamp: "2 days ago" },
-  ];
+    const handleLogout = () => {
+        localStorage.removeItem("uid");      // Clear user ID
+        localStorage.removeItem("username"); // Clear username
+        localStorage.removeItem("token");    // Clear JWT token
+        navigate("/alumni/login");           // Redirect to login page
+    };
 
-  // Placeholder data for recent activity
-  const recentActivity = [
-    { id: 201, text: "Posted a new job opportunity: Software Engineer at ISRO.", time: "2 days ago" },
-    { id: 202, text: "Commented on Arun Kumar's latest post.", time: "1 day ago" },
-    { id: 203, text: "Updated profile information and skills.", time: "3 hours ago" },
-  ];
+    const handleBackgroundImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setBackgroundImageFile(file);
+            setDisplayedBackgroundImage(URL.createObjectURL(file)); 
+        }
+    };
 
-  // Placeholder data for mentorship opportunities
-  const mentorshipOpportunities = [
-    { id: 301, text: "Seeking mentor for AI/ML career path.", status: "New" },
-    { id: 302, text: "Offering mentorship in Software Development.", status: "Available" },
-    { id: 303, text: "Joined the 'Career Guidance for Freshers' group.", status: "Active" },
-  ];
+    useEffect(() => {
+        const token = localStorage.getItem("token"); 
+        if (!userId) {
+            handleLogout();
+            return;
+        }
+        const fetchUserProfile = async () => {
+            try {
+                setProfileLoading(true); // Set loading state
+                const res = await fetch(`${API_BASE_URL}/api/alumni/${userId}/profile`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}` // Include Authorization header
+                    }
+                });
 
-  // Function to handle logout confirmation
-  const handleLogout = () => {
-    // In a real application, you would clear user session/token here
-    console.log("Logging out from AlumniProfile...");
-    setIsLogoutModalOpen(false); // Close the modal
-    navigate('/pages/welcome'); // Redirect to Welcome.jsx
-  };
+                if (!res.ok) {
+                    const errorData = await res.json(); // Attempt to parse error message from response
+                    throw new Error(errorData.message || "Failed to load profile");
+                }
+                const data = await res.json(); // Parse successful response
+                // Update userProfile state with fetched data, providing fallbacks for null/undefined values
+                setUserProfile({
+                    username: data.uname || "Alumni User",
+                    email: data.uemail || "user@example.com",
+                    profilePhotoUrl: data.profilePhotoUrl || "https://placehold.co/150x150/CA5C62/ffffff?text=Photo",
+                    currentJob: data.currentJob || "Not updated",
+                    batch: data.ubatch || "N/A",
+                    department: data.udepartment || "N/A",
+                    yearsOfExperience: data.yearsOfExperience || 0,
+                    numOfProjects: data.numOfProjects || 0,
+                    numOfAwards: data.numOfAwards || 0,
+                    contactNumber: data.contactNumber || "N/A",
+                    summary: data.summary || "No summary provided yet.",
+                    specializations: data.specializations || "No specializations yet.",
+                    facebookUrl: data.facebookUrl || "",
+                    instagramUrl: data.instagramUrl || "",
+                    linkedinUrl: data.linkedinUrl || "",
+                });
+            } catch (err) {
+                console.error("Error fetching profile:", err);
+                setProfileError("Failed to load profile: " + err.message); // Set error message
+            } finally {
+                setProfileLoading(false); // End loading state
+            }
+        };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFE9D4] to-[#EEC8B9] font-inter pb-12">
-      <div className="container mx-auto mt-8 flex flex-col lg:flex-row p-4 gap-4">
-        {/* Sidebar for profile information */}
-        <div className="lg:w-1/4 bg-gradient-to-br from-[#BA3D47] to-[#930911] text-white p-6 rounded-xl shadow-xl flex flex-col items-center text-center">
-          <div className="relative w-28 h-28 mb-4">
-            <img src={profileImage} alt="Profile" className="w-full h-full rounded-full object-cover border-3 border-[#E4A39D] shadow-lg" onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/150x150/CA5C62/ffffff?text=Photo" }} />
-            <Camera className="absolute bottom-1 right-1 bg-[#CA5C62] text-white rounded-full p-1.5 cursor-pointer shadow-md hover:bg-[#BA3D47] transition duration-300" size={24} title="Change Profile Picture" />
-          </div>
-          <div className="text-2xl font-bold mb-1 text-[#FFE9D4]">Priya Raj</div>
-          <div className="text-base italic mb-4 text-[#EEC8B9]">Research Scientist at ISRO</div>
-          <div className="text-[#EEC8B9] text-xs mb-4">
-            <i>Class of 2018 · B.Sc Computer Science</i>
-          </div>
-          <div className="flex justify-center gap-4 mb-4">
-            <div className="text-center">
-              <strong className="block text-xl font-bold text-[#FFE9D4]">4</strong>
-              <span className="text-[#EEC8B9] text-sm">Years Exp.</span>
-            </div>
-            <div className="text-center">
-              <strong className="block text-xl font-bold text-[#FFE9D4]">17</strong>
-              <span className="text-[#EEC8B9] text-sm">Projects</span>
-            </div>
-            <div className="text-center">
-              <strong className="block text-xl font-bold text-[#FFE9D4]">2</strong>
-              <span className="text-[#EEC8B9] text-sm">Awards</span>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 items-center mb-4 text-[#EEC8B9] text-sm">
-            <div className="flex items-center gap-1.5">
-              <Phone size={16} /> <span>+91-9876543210</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Mail size={16} /> <span>priyaraj@isro.gov.in</span>
-            </div>
-          </div>
-          <Link to="/alumni/editprofile" className="w-full no-underline">
-            <button className="w-full py-2 bg-[#CA5C62] hover:bg-[#BA3D47] text-white font-semibold rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105">
-              Edit Profile
-            </button>
-          </Link>
+        // Function to fetch user's connections
+        const fetchConnections = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/alumni/connection/${userId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) console.warn("Failed to fetch connections, status:", res.status);
+                const data = await res.json();
+                setConnections(data || []);
+            } catch (err) { console.error("Failed to load connections:", err); }
+        };
 
-          {/* New Section: Alumni Posts Grid */}
-          <div className="w-full mt-6 bg-[#930911] p-4 rounded-lg shadow-inner">
-            <div className="flex items-center justify-between mb-3 border-b border-[#CA5C62] pb-2">
-              <h3 className="text-lg font-bold text-[#FFE9D4] flex items-center gap-2"><Image size={18} />My Posts</h3>
-              <Link to="/alumni/myposts" className="text-xs text-[#EEC8B9] hover:underline">View All</Link>
-            </div>
-            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar"> {/* Added custom-scrollbar for better aesthetics */}
-              {alumniPosts.map(post => (
-                <Link key={post.id} to={`/alumni/post/${post.id}`} className="group relative block w-full aspect-square overflow-hidden rounded-md shadow-md hover:shadow-lg transition duration-300 transform hover:scale-105">
-                  <img src={post.imageUrl} alt={post.caption} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-white text-xs text-center p-1 font-medium truncate">{post.caption}</p>
-                  </div>
-                </Link>
-              ))}
-              {alumniPosts.length === 0 && <p className="text-sm text-[#EEC8B9] text-center col-span-2">No posts yet.</p>}
-            </div>
-          </div>
+        // Function to fetch user's messages
+        const fetchMessages = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/users/${userId}/messages`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) console.warn("Failed to fetch messages, status:", res.status);
+                const data = await res.json();
+                setMessages(data || []);
+            } catch (err) { console.error("Failed to load messages:", err); }
+        };
+
+        // Function to fetch user's general activities
+        const fetchActivities = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/alumni/activity/${userId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) console.warn("Failed to fetch activities, status:", res.status);
+                const data = await res.json();
+                setActivities(data || []);
+            } catch (err) { console.error("Failed to load activities:", err); }
+        };
+
+        // Function to fetch alumni's own posts
+        const fetchAlumniPosts = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/users/${userId}/posts`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    console.warn("Failed to fetch alumni posts, status:", res.status);
+                    const errorText = await res.text();
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        console.error("Error fetching alumni posts:", errorJson.message || errorJson);
+                    } catch (parseError) {
+                        console.error("Error fetching alumni posts: Non-JSON response:", errorText);
+                    }
+                    return; // Exit if not successful
+                }
+
+                const data = await res.json();
+                setAlumniPosts(Array.isArray(data) ? data : []);
+            } catch (err) {
+                console.error("Failed to load alumni posts (network error or unexpected data):", err);
+                setAlumniPosts([]); // Reset to empty array on error
+            }
+        };
+
+        // Call all necessary fetch functions
+        fetchUserProfile();
+        fetchConnections();
+        fetchMessages();
+        fetchActivities();
+        fetchAlumniPosts(); // Call the new fetch function for alumni's own posts
+    }, [userId, navigate, API_BASE_URL]); // Dependencies for useEffect
+
+    // Determine which posts to display based on showAllPostsOnProfile state
+    const displayedPosts = showAllPostsOnProfile ? alumniPosts : alumniPosts.slice(0, 2);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-[#FFE9D4] to-[#EEC8B9] font-inter">
+            {/* Top Navigation Bar */}
+            <nav className="bg-[#BA3D47] p-4 text-white shadow-md">
+                <div className="container mx-auto flex justify-between items-center">
+                    <Link to="/alumni/dashboard" className="text-2xl font-bold tracking-wide">AlumniConnect</Link>
+                    <div className="flex items-center space-x-6">
+                        <Link to="/alumni/dashboard" className="hover:text-[#FFE9D4] transition font-medium text-base">Home</Link>
+                        <Link to="/events" className="hover:text-[#FFE9D4] transition font-medium text-base">Events</Link>
+                        <Link to="/alumni/messages" className="hover:text-[#FFE9D4] transition font-medium text-base">Messages</Link>
+                        <Link to="/alumni/posts" className="hover:text-[#FFE9D4] transition font-semibold text-base">Posts</Link>
+                        <button onClick={() => setIsLogoutModalOpen(true)} className="hover:text-[#FFE9D4] transition font-medium text-base">Logout</button>
+                    </div>
+                </div>
+            </nav>
+
+            {/* Conditional rendering for loading, error, or profile content */}
+            {profileLoading ? (
+                <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+                    <p className="text-[#BA3D47] text-xl">Loading profile...</p>
+                </div>
+            ) : profileError ? (
+                <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-xl text-center border border-red-400">
+                        <p className="text-red-600 text-lg">{profileError}</p>
+                        <button onClick={() => navigate('/alumni/login')} className="mt-4 px-4 py-2 bg-[#BA3D47] text-white rounded-md">Login Again</button>
+                    </div>
+                </div>
+            ) : (
+                <div className="container mx-auto mt-0 pb-12">
+                    {/* Hero Section for profile banner and basic info */}
+                    <div className="relative bg-cover bg-center h-64 rounded-b-xl shadow-lg flex items-end justify-center pb-8"
+                           style={{ backgroundImage: `url(${displayedBackgroundImage})` }}>
+                        <div className="absolute inset-0 bg-black opacity-40 rounded-b-xl"></div>
+                        
+                        {/* Camera icon for changing background */}
+                        <label className="absolute top-4 right-4 z-20 cursor-pointer p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-75 transition-colors">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleBackgroundImageChange}
+                                className="hidden"
+                            />
+                            <FiCamera size={24} className="text-white" />
+                        </label>
+
+                        <div className="relative z-10 flex flex-col items-center justify-center h-full text-white pt-8">
+                            <img
+                                src={`${API_BASE_URL}${userProfile.profilePhotoUrl}`}
+                                alt="Profile"
+                                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg -mt-16"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/150x150/CA5C62/ffffff?text=Photo"; }}
+                            />
+                            <h2 className="text-3xl font-bold mt-2">{userProfile.username}</h2>
+                            <p className="text-lg italic mt-1">{userProfile.currentJob}</p>
+                            <p className="text-sm mt-0.5">{userProfile.batch} &bull; {userProfile.department}</p>
+                        </div>
+                    </div>
+
+                    {/* Main Content Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 px-4">
+                        {/* Left Column: Personal Details & Edit Profile & My Posts */}
+                        <div className="md:col-span-1 space-y-6">
+                           
+                            {/* My Posts Section */}
+                            <div className="bg-white shadow-lg rounded-xl p-6 border border-[#E4A39D]">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-xl text-[#930911]">My Posts ({alumniPosts.length})</h3>
+                                    <Link to="/alumni/post" className="px-4 py-2 bg-[#BA3D47] text-white rounded-full text-sm font-semibold hover:bg-[#930911] transition-colors">
+                                        New Post
+                                    </Link>
+                                </div>
+                                {alumniPosts.length > 0 ? (
+                                    <ul className="text-sm text-gray-700 space-y-3">
+                                        {/* Render posts based on showAllPostsOnProfile state */}
+                                        {displayedPosts.map((post) => (
+                                            <li key={post.postId} className="flex items-start bg-gray-50 p-3 rounded-md border border-gray-100 hover:shadow-sm transition">
+                                                <span className="text-[#CA5C62] mr-2 text-lg leading-none">•</span>
+                                                <div>
+                                                    <p className="font-medium text-gray-800 break-words whitespace-pre-wrap">{post.postText}</p>
+                                                    {post.postPhotoUrl && (
+                                                         <img
+                                                            src={`${API_BASE_URL}${post.postPhotoUrl}`}
+                                                            alt="Post Image"
+                                                            className="mt-2 w-full h-auto max-h-48 object-cover rounded shadow"
+                                                            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/150x100/eeeeee/333333?text=Image+Load+Error"; }}
+                                                        />
+                                                    )}
+                                                    <p className="text-xs text-gray-500 mt-1">{new Date(post.createdAt).toLocaleString()}</p>
+                                                </div>
+                                            </li>
+                                        ))}
+                                        {/* Show "View All" button if there are more than 2 posts AND not all posts are currently shown */}
+                                        {alumniPosts.length > 2 && !showAllPostsOnProfile && (
+                                            <li className="text-center mt-2">
+                                                {/* Button to show all posts on the same page */}
+                                                <button
+                                                    onClick={() => setShowAllPostsOnProfile(true)}
+                                                    className="text-[#BA3D47] hover:text-[#930911] text-sm font-semibold transition px-4 py-2 rounded-full border border-[#BA3D47]"
+                                                >
+                                                    View All My Posts
+                                                </button>
+                                            </li>
+                                        )}
+                                        {/* OPTIONAL: Show "Show Less" button if all posts are currently shown and there are more than 2 */}
+                                        {alumniPosts.length > 2 && showAllPostsOnProfile && (
+                                            <li className="text-center mt-2">
+                                                <button
+                                                    onClick={() => setShowAllPostsOnProfile(false)}
+                                                    className="text-[#BA3D47] hover:text-[#930911] text-sm font-semibold transition px-4 py-2 rounded-full border border-[#BA3D47]"
+                                                >
+                                                    Show Less
+                                                </button>
+                                            </li>
+                                        )}
+                                    </ul>
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No posts found yet. Start by creating one!</p>
+                                )}
+                            </div>
+                            {/* END NEW: Alumni Posts Section */}
+
+                            {/* START COMBINED PERSONAL DETAILS SECTION */}
+                            <div className="bg-white shadow-lg rounded-lg p-6 border border-[#E4A39D] space-y-6">
+                                {/* About Me Card */}
+                                <div>
+                                    <h3 className="font-bold text-xl text-[#930911] mb-3">About Me</h3>
+                                    <p className="text-gray-700 leading-relaxed">{userProfile.summary}</p>
+                                </div>
+
+                                {/* Professional Metrics Card */}
+                                <div>
+                                    <h3 className="font-bold text-xl text-[#930911] mb-4">Professional Metrics</h3>
+                                    <div className="space-y-3">
+                                        <p className="flex justify-between items-center text-gray-700">
+                                            <span className="font-semibold">Years of Experience:</span>
+                                            <span className="text-[#BA3D47] font-bold">{userProfile.yearsOfExperience}</span>
+                                        </p>
+                                        <p className="flex justify-between items-center text-gray-700">
+                                            <span className="font-semibold">Projects Completed:</span>
+                                            <span className="text-[#BA3D47] font-bold">{userProfile.numOfProjects}</span>
+                                        </p>
+                                        <p className="flex justify-between items-center text-gray-700">
+                                            <span className="font-semibold">Awards Won:</span>
+                                            <span className="text-[#BA3D47] font-bold">{userProfile.numOfAwards}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Specializations Card */}
+                                <div>
+                                    <h3 className="font-bold text-xl text-[#930911] mb-3">Specializations</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {userProfile.specializations.split(',').filter(s => s.trim() !== '').map((spec, i) => (
+                                            <span key={i} className="bg-[#EEC8B9] text-[#930911] text-sm px-3 py-1 rounded-full font-medium">
+                                                {spec.trim()}
+                                            </span>
+                                        ))}
+                                        {userProfile.specializations === "No specializations yet." && (
+                                             <span className="text-sm text-gray-500">No specializations provided yet.</span>
+                                        )}
+                                    </div>
+                                </div>
 
           {/* Social Media Icons (Moved below "My Posts") */}
           <div className="flex gap-3 mt-6 justify-center">
@@ -239,6 +446,90 @@ const AlumniProfile = () => {
                 {recentActivity.length === 0 && <p className="text-sm text-gray-500">No recent activity.</p>}
               </div>
             </div>
+                                {/* Contact Information Card */}
+                                <div>
+                                    <h3 className="font-bold text-xl text-[#930911] mb-4">Contact Information</h3>
+                                    <p className="text-gray-700 mb-2">
+                                        <span className="font-semibold">Email:</span> {userProfile.email}
+                                    </p>
+                                    <p className="text-gray-700 mb-2">
+                                        <span className="font-semibold">Phone:</span> {userProfile.contactNumber}
+                                    </p>
+                                    <div className="flex space-x-4 mt-4 justify-center">
+                                        {userProfile.facebookUrl && (
+                                            <a href={userProfile.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-[#3b5998] hover:scale-110 transition-transform">
+                                                <FaFacebookF size={24} />
+                                            </a>
+                                        )}
+                                        {userProfile.instagramUrl && (
+                                            <a href={userProfile.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-[#E1306C] hover:scale-110 transition-transform">
+                                                <FaInstagram size={24} />
+                                            </a>
+                                        )}
+                                        {userProfile.linkedinUrl && (
+                                            <a href={userProfile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#0077b5] hover:scale-110 transition-transform">
+                                                <FaLinkedinIn size={24} />
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            {/* END COMBINED PERSONAL DETAILS SECTION */}
+                            
+                            {/* Edit Profile Button - Moved here as requested (under social icons in combined section) */}
+                            <div className="text-center">
+                                <Link to="/alumni/editprofile">
+                                    <button className="px-6 py-3 bg-[#CA5C62] hover:bg-[#BA3D47] text-white font-semibold rounded-full shadow-lg transition transform hover:scale-105 w-full">
+                                        Edit Profile
+                                    </button>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Connections, Direct Messages, Recent Activities */}
+                        <div className="md:col-span-2 space-y-6">
+                            {/* Connections Card */}
+                            <div className="bg-white shadow-lg rounded-lg p-6 border border-[#E4A39D]">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-xl text-[#930911]">Connections ({connections.length})</h3>
+                                    <Link to="/alumni/connections" className="text-[#BA3D47] hover:text-[#930911] text-sm font-semibold transition">
+                                        View All
+                                    </Link>
+                                </div>
+                                {connections.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {connections.slice(0, 6).map((c, i) => ( // Show a few, then view all
+                                            <div key={i} className="bg-[#FFE9D4] text-[#BA3D47] text-center rounded-md p-3 shadow-sm text-sm font-semibold truncate hover:scale-105 transition-transform">
+                                                {c.name}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No connections found.</p>
+                                )}
+                            </div>
+
+                            {/* Direct Messages Card */}
+                            <div className="bg-white shadow-lg rounded-lg p-6 border border-[#E4A39D]">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-xl text-[#930911]">Direct Messages</h3>
+                                    <Link to="/alumni/messages" className="text-[#BA3D47] hover:text-[#930911] text-sm font-semibold transition">
+                                        View All
+                                    </Link>
+                                </div>
+                                {messages.length > 0 ? (
+                                    <ul className="text-sm text-gray-700 space-y-3">
+                                        {messages.slice(0, 3).map((msg, i) => ( // Show a few, then view all
+                                            <li key={i} className="flex items-start bg-gray-50 p-3 rounded-md border border-gray-100">
+                                                <span className="text-[#CA5C62] mr-2 text-lg leading-none">•</span>
+                                                <p className="truncate w-full font-medium">{msg.content}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No new messages.</p>
+                                )}
+                            </div>
 
             {/* Sub-part 2 of Third Section: Mentorship Opportunities */}
             <div className="bg-[#FFE9D4] rounded-lg shadow-sm p-4 flex-1">
@@ -285,6 +576,34 @@ const AlumniProfile = () => {
           <span className="text-xxs mt-1 text-[#BA3D47]">Logout</span>
         </div>
       </div>
+                            {/* Recent Activities (Posts) Section - Renamed and refined */}
+                            <div className="bg-white shadow-lg rounded-lg p-6 border border-[#E4A39D]">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-xl text-[#930911]">Recent Activities</h3>
+                                    <Link to="/alumni/activities" className="text-[#BA3D47] hover:text-[#930911] text-sm font-semibold transition">
+                                        View All
+                                    </Link>
+                                </div>
+                                {activities.length > 0 ? (
+                                    <ul className="text-sm text-gray-700 space-y-3">
+                                        {activities.slice(0, 5).map((act, i) => ( // Show a few, then view all
+                                            <li key={i} className="flex items-start bg-gray-50 p-3 rounded-md border border-gray-100">
+                                                <span className="text-[#CA5C62] mr-2 text-lg leading-none">•</span>
+                                                <div>
+                                                    <p className="font-medium">{act.activity_details}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{new Date(act.created_at).toLocaleString()}</p>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No recent activities to display.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
       {/* Logout Confirmation Modal */}
       <LogoutConfirmationModal

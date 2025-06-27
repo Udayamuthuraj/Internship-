@@ -181,7 +181,6 @@ const WelcomePage = () => {
           <li><a href="/admin" className="hover:text-[#BA3D47]">Admin</a></li>
 =======
           <li><a href="/admin/login" className="hover:text-[#BA3D47]">Admin</a></li>
->>>>>>> aa5ea29 (Initial commit)
         </ul>
       </motion.nav>
 

@@ -20,14 +20,18 @@ import AlumniRegister from "./pages/alumni/AlumniRegister";
 import AlumniDashboard from "./pages/alumni/AlumniDashboard";
 import AlumniSearch from "./pages/alumni/AlumniSearch";
 import AlumniPost from "./pages/alumni/AlumniPost";
+import AlumniAllPosts from './pages/alumni/AlumniAllPosts';
 import AlumniProfile from "./pages/alumni/AlumniProfile";
 import AlumniEditProfile from "./pages/alumni/AlumniEditProfile";
+import AlumniResetPassword from "./pages/alumni/AlumniResetPassword";
 
 // Admin pagesLog
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminRegister from "./pages/admin/AdminRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import FacultyDetail from "./pages/FacultyDetail";  // <-- New import
+
+import FacultyDetail from "./pages/FacultyDetail";  
+
 
 //other pages
 import EventPage from "./pages/Events";
@@ -50,21 +54,22 @@ function App() {
         <Route path="/alumni/dashboard" element={<AlumniDashboard />} />
         <Route path="/alumni/search" element={<AlumniSearch />} />
         <Route path="/alumni/post" element={<AlumniPost />} />
+        <Route path="/alumni/posts" element={<AlumniAllPosts />} />
         <Route path="/alumni/profile" element={<AlumniProfile />} />
         <Route path="/alumni/editprofile" element={<AlumniEditProfile />} />
-        <Route path="/pages/welcome" element={<Welcome />} />
+        <Route path="/alumni/reset-password" element={<AlumniResetPassword />} />
+
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
-<<<<<<< HEAD
-=======
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/register" element={<AdminRegister />} />
 
->>>>>>> aa5ea29 (Initial commit)
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        
         {/*event route */}
-        <Route path= "/events" element ={<EventPage/>} />
+        <Route path="/events" element={<EventPage />} />
+
+        <Route path="/faculty/:id" element={<FacultyDetail />} />
+
       </Routes>
     </Router>
   );
