@@ -2,19 +2,24 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home } from "lucide-react";
-import universityBg from "../../assets/unomstu1.jpg";
+import axios from "axios"; // Import axios for API calls
+import universityBg from "../../assets/unomstu1.jpg"; // Ensure this path is correct
 
 const AlumniRegister = () => {
   // State to hold all form data, including OTP
   const [formData, setFormData] = useState({
-    uname: "",
-    udepartment: "",
-    ubatch: "",
-    uemail: "",
-    otp: "", 
-    upassword: "",
+    username: "",
+    department: "",
+    batch: "",
+    email: "",
+    otp: "", // OTP field is part of formData now
+    password: "",
   });
 
+  // State to manage the registration flow steps
+  // 'initial': User enters all details, clicks Register to send OTP
+  // 'otp_sent': OTP has been sent, user needs to enter OTP and click Register to verify
+  // 'otp_verified': OTP verified, user clicks Register to complete registration
   const [currentStep, setCurrentStep] = useState('initial');
 
   // State for displaying messages to the user
@@ -35,13 +40,14 @@ const AlumniRegister = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSendOTP = () => {
-    if (!email) return;
-    setOtpSent(true);
-    alert("OTP sent to your email.");
+  // Handle changes to form inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleRegister = async (e) => {
+  // Main handler for the single "Register" button
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage(''); // Clear previous messages
     setIsLoading(true); // Disable button during processing
@@ -50,15 +56,14 @@ const AlumniRegister = () => {
       if (currentStep === 'initial') {
         // Step 1: Request OTP
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const trimmedEmail = formData.uemail.trim(); // Add this line to remove leading/trailing whitespace
-        if (!emailRegex.test(trimmedEmail)) {
+        if (!emailRegex.test(formData.email)) {
           setMessage("Please enter a valid email address.");
           setIsSuccess(false);
           setIsLoading(false);
           return;
         }
 
-        const response = await axios.post('/api/alumni/request-otp', { uemail: trimmedEmail });
+        const response = await axios.post('/api/alumni/request-otp', { email: formData.email });
         setMessage(response.data.message || 'OTP sent to your email.');
         setIsSuccess(true);
         setCurrentStep('otp_sent'); // Move to next step
@@ -73,7 +78,7 @@ const AlumniRegister = () => {
           return;
         }
 
-        const response = await axios.post('/api/alumni/verify-otp', { uemail: formData.uemail, otp: formData.otp });
+        const response = await axios.post('/api/alumni/verify-otp', { email: formData.email, otp: formData.otp });
         setMessage(response.data.message || 'OTP verified successfully! Click Register to complete.');
         setIsSuccess(true);
         setCurrentStep('otp_verified'); // Move to next step
@@ -82,7 +87,7 @@ const AlumniRegister = () => {
       } else if (currentStep === 'otp_verified') {
         // Step 3: Complete Registration
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        if (!passwordRegex.test(formData.upassword)) {
+        if (!passwordRegex.test(formData.password)) {
           setMessage("Password must be 8+ characters, contain upper/lowercase, number, and special char.");
           setIsSuccess(false);
           setIsLoading(false);
@@ -151,61 +156,70 @@ const AlumniRegister = () => {
               <h2 className="text-4xl font-bold text-center text-[#930911] mb-8">
                 Alumni Register
               </h2>
-              <form onSubmit={handleRegister} className="space-y-5">
+
+              {/* Message Display Area */}
+              {message && (
+                <div className={`alert ${isSuccess ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} text-center mb-4 p-2 rounded`}>
+                  {message}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Always visible fields */}
                 <input
                   type="text"
-                  placeholder="Full Name"
+                  placeholder="Username"
                   className="input-style"
-                  name="uname"
-                  value={formData.uname}
+                  name="username"
+                  value={formData.username}
                   onChange={handleChange}
                   required
-                  disabled={currentStep !== 'initial' && currentStep !== 'otp_sent'} // Disable after OTP sent, re-enable if verified
+                  disabled={currentStep !== 'initial' && currentStep !== 'otp_verified'} // Disable after OTP sent, re-enable if verified
                 />
                 <input
                   type="text"
                   placeholder="Department"
                   className="input-style"
-                  name="udepartment"
-                  value={formData.udepartment}
+                  name="department"
+                  value={formData.department}
                   onChange={handleChange}
                   required
-                  disabled={currentStep !== 'initial' && currentStep !== 'otp_sent'}
+                  disabled={currentStep !== 'initial' && currentStep !== 'otp_verified'}
                 />
                 <input
                   type="text"
-                  placeholder="Batch (e.g., 2020-2022)"
+                  placeholder="Batch (e.g., 2020)"
                   className="input-style"
-                  name="ubatch"
-                  value={formData.ubatch}
+                  name="batch"
+                  value={formData.batch}
                   onChange={handleChange}
                   required
-                  disabled={currentStep !== 'initial' && currentStep !== 'otp_sent'}
+                  disabled={currentStep !== 'initial' && currentStep !== 'otp_verified'}
                 />
                 <input
                   type="email"
                   placeholder="Email"
                   className="input-style"
-                  name="uemail"
-                  value={formData.uemail}
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   required
+                  disabled={currentStep !== 'initial'} // Disable email input after OTP sent
                 />
 
-                <div className="flex gap-3"> {(
+                {/* OTP input field - only visible after OTP is sent */}
+                {currentStep !== 'initial' && (
                   <input
                     type="text"
                     placeholder="Enter OTP"
-                    className={`input-style flex-1 ${
-                      !otpSent ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    disabled={!otpSent}
+                    className="input-style"
+                    name="otp"
+                    value={formData.otp}
+                    onChange={handleChange}
                     required
                     disabled={currentStep === 'otp_verified'} // Disable OTP input once verified
                   />
-                )}</div>
+                )}
 
                 {/* Password field - only visible after OTP is verified */}
                 {currentStep === 'otp_verified' && (
@@ -213,8 +227,8 @@ const AlumniRegister = () => {
                     type="password"
                     placeholder="Create Password"
                     className="input-style"
-                    name="upassword"
-                    value={formData.upassword}
+                    name="password"
+                    value={formData.password}
                     onChange={handleChange}
                     required
                   />
@@ -223,14 +237,15 @@ const AlumniRegister = () => {
                 <button
                   type="submit"
                   className="w-full bg-[#930911] text-white py-3 rounded-lg font-semibold hover:bg-[#BA3D47] transition duration-300"
+                  disabled={isLoading}
                 >
-                  Register
+                  {getButtonText()}
                 </button>
               </form>
               <p className="mt-6 text-center text-sm text-white-600">
                 Already have an account?{" "}
                 <Link
-                  to="/alumni/login"
+                  to="/login"
                   className="text-[#930911] font-medium hover:underline"
                 >
                   Login here
