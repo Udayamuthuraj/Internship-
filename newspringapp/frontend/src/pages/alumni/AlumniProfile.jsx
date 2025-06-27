@@ -59,17 +59,28 @@ const AlumniProfile = () => {
         linkedinUrl: "",
     });
 
+    // States for various related data sections
     const [connections, setConnections] = useState([]);
     const [messages, setMessages] = useState([]);
     const [activities, setActivities] = useState([]); // This will serve as the "Recent Activities" / "Posts" section
     const [alumniPosts, setAlumniPosts] = useState([]); // State specifically for alumni's own posts
 
+    // --- NEW STATE: Controls whether to show all posts or a limited number ---
+    // This state is for the "My Posts" section within the profile page itself.
+    // If you click "View All" within this section, it doesn't navigate, but expands the view.
+    // For navigating to a separate "all posts" page, the <Link> will handle it.
     const [showAllPostsOnProfile, setShowAllPostsOnProfile] = useState(false);
+
+
+    // State for background image file
     const [backgroundImageFile, setBackgroundImageFile] = useState(null);
-    const [displayedBackgroundImage, setDisplayedBackgroundImage] = useState(universityBg); 
+    const [displayedBackgroundImage, setDisplayedBackgroundImage] = useState(universityBg); // Initial background
+
+    // Loading and error states for the main profile data
     const [profileLoading, setProfileLoading] = useState(true);
     const [profileError, setProfileError] = useState(null);
 
+    // Function to handle user logout
     const handleLogout = () => {
         localStorage.removeItem("uid");      // Clear user ID
         localStorage.removeItem("username"); // Clear username
@@ -77,20 +88,31 @@ const AlumniProfile = () => {
         navigate("/alumni/login");           // Redirect to login page
     };
 
+    // Handle background image file change
     const handleBackgroundImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setBackgroundImageFile(file);
-            setDisplayedBackgroundImage(URL.createObjectURL(file)); 
+            setDisplayedBackgroundImage(URL.createObjectURL(file)); // Show preview
+            // In a real application, you'd upload this file to your backend
+            // and save its URL to the user's profile in the database.
+            // This would involve a new API call (e.g., PUT /api/alumni/{userId}/background-image)
+            // with FormData, similar to how profile photos are handled.
         }
     };
 
+
+    // useEffect hook to fetch user profile and related data on component mount or userId change
     useEffect(() => {
-        const token = localStorage.getItem("token"); 
+        const token = localStorage.getItem("token"); // Get JWT token from local storage
+
+        // If userId is not valid, log out and redirect
         if (!userId) {
             handleLogout();
             return;
         }
+
+        // Function to fetch the main user profile details
         const fetchUserProfile = async () => {
             try {
                 setProfileLoading(true); // Set loading state
@@ -369,83 +391,6 @@ const AlumniProfile = () => {
                                     </div>
                                 </div>
 
-          {/* Social Media Icons (Moved below "My Posts") */}
-          <div className="flex gap-3 mt-6 justify-center">
-            <a href="https://facebook.com" target="_blank" rel="noreferrer" className="block">
-              <div className="bg-[#930911] hover:bg-[#BA3D47] p-2 rounded-full transition duration-300 ease-in-out shadow-md">
-                <Facebook size={20} className="text-white" />
-              </div>
-            </a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="block">
-              <div className="bg-[#930911] hover:bg-[#BA3D47] p-2 rounded-full transition duration-300 ease-in-out shadow-md">
-                <Instagram size={20} className="text-white" />
-              </div>
-            </a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="block">
-              <div className="bg-[#930911] hover:bg-[#BA3D47] p-2 rounded-full transition duration-300 ease-in-out shadow-md">
-                <Linkedin size={20} className="text-white" />
-              </div>
-            </a>
-          </div>
-        </div>
-
-        {/* Main content area (now split into 3 vertical parts, with the 3rd split horizontally) */}
-        <div className="flex-1 flex flex-col bg-white p-6 rounded-xl shadow-xl gap-4">
-          {/* Connections Section (Part 1 - remains same) */}
-          <div className="bg-[#FFE9D4] rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between mb-2 border-b-2 border-[#CA5C62] pb-1.5">
-              <h2 className="text-xl font-bold text-[#BA3D47] flex items-center gap-2"><Users size={20} />Connections</h2>
-              <Link to="/alumni/connections" className="text-sm text-[#930911] hover:underline">View All</Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 overflow-auto h-48">
-              {connections.map(connection => (
-                <Link key={connection.id} to={`/alumni/profile/${connection.id}`} className="flex flex-col items-center gap-1 p-2 rounded-md hover:bg-gray-100">
-                  <img src={connection.profile} alt={connection.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
-                  <span className="text-xs text-gray-700 font-medium truncate w-full text-center">{connection.name}</span>
-                </Link>
-              ))}
-              {connections.length === 0 && <p className="text-sm text-gray-500">No connections yet.</p>}
-            </div>
-          </div>
-
-          {/* Direct Messages Section (Part 2 - remains same) */}
-          <div className="bg-[#FFE9D4] rounded-lg shadow-sm p-4 flex-1 overflow-hidden">
-            <div className="flex items-center justify-between mb-2 border-b-2 border-[#CA5C62] pb-1.5">
-              <h2 className="text-xl font-bold text-[#BA3D47] flex items-center gap-2"><Send size={20} />Direct Messages</h2>
-              <Link to="/alumni/messages" className="text-sm text-[#930911] hover:underline">View All</Link>
-            </div>
-            <div className="overflow-auto h-full">
-              {directMessages.map(message => (
-                <Link key={message.id} to={`/alumni/messages/${message.id}`} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 border-b border-gray-100 last:border-b-0">
-                  <div>
-                    <span className="text-sm font-semibold text-gray-700">{message.sender}</span>
-                    <p className="text-xs text-gray-500 truncate w-48 md:w-auto">{message.lastMessage}</p>
-                  </div>
-                  <span className="text-xxs text-gray-400">{message.timestamp}</span>
-                </Link>
-              ))}
-              {directMessages.length === 0 && <p className="text-sm text-gray-500">No direct messages yet.</p>}
-            </div>
-          </div>
-
-          {/* New Third Section - Split into 2 parts */}
-          <div className="flex flex-col md:flex-row gap-4 flex-1">
-            {/* Sub-part 1 of Third Section: Recent Activity */}
-            <div className="bg-[#FFE9D4] rounded-lg shadow-sm p-4 flex-1">
-              <div className="flex items-center justify-between mb-2 border-b-2 border-[#CA5C62] pb-1.5">
-                <h2 className="text-xl font-bold text-[#BA3D47] flex items-center gap-2"><Activity size={20} />Recent Activity</h2>
-                <Link to="/alumni/activity" className="text-sm text-[#930911] hover:underline">View All</Link>
-              </div>
-              <div className="overflow-auto h-48"> {/* Fixed height for scrolling */}
-                {recentActivity.map(item => (
-                  <div key={item.id} className="p-2 rounded-md hover:bg-gray-100 border-b border-gray-100 last:border-b-0">
-                    <p className="text-sm text-gray-700">{item.text}</p>
-                    <span className="text-xxs text-gray-400">{item.time}</span>
-                  </div>
-                ))}
-                {recentActivity.length === 0 && <p className="text-sm text-gray-500">No recent activity.</p>}
-              </div>
-            </div>
                                 {/* Contact Information Card */}
                                 <div>
                                     <h3 className="font-bold text-xl text-[#930911] mb-4">Contact Information</h3>
@@ -531,51 +476,6 @@ const AlumniProfile = () => {
                                 )}
                             </div>
 
-            {/* Sub-part 2 of Third Section: Mentorship Opportunities */}
-            <div className="bg-[#FFE9D4] rounded-lg shadow-sm p-4 flex-1">
-              <div className="flex items-center justify-between mb-2 border-b-2 border-[#CA5C62] pb-1.5">
-                <h2 className="text-xl font-bold text-[#BA3D47] flex items-center gap-2"><Award size={20} />Mentorship Opportunities</h2>
-                <Link to="/alumni/mentorship" className="text-sm text-[#930911] hover:underline">View All</Link>
-              </div>
-              <div className="overflow-auto h-48"> {/* Fixed height for scrolling */}
-                {mentorshipOpportunities.map(item => (
-                  <div key={item.id} className="p-2 rounded-md hover:bg-gray-100 border-b border-gray-100 last:border-b-0">
-                    <p className="text-sm text-gray-700">{item.text}</p>
-                    <span className="text-xxs text-gray-400 font-semibold">{item.status}</span>
-                  </div>
-                ))}
-                {mentorshipOpportunities.length === 0 && <p className="text-sm text-gray-500">No mentorship opportunities.</p>}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Fixed Footer for navigation */}
-      <div className="fixed bottom-0 left-0 w-full bg-[#FFE9D4] flex justify-around items-center py-1 shadow-lg z-10 rounded-t-xl">
-        <Link to="/alumni/dashboard" className="flex flex-col items-center text-gray-600 hover:text-[#BA3D47] transition duration-300">
-          <div className="bg-[#930911] hover:bg-[#BA3D47] p-2.5 rounded-full transition duration-300 ease-in-out shadow-md transform hover:scale-105">
-            <Home size={18} className="text-white" />
-          </div>
-          <span className="text-xxs mt-1 text-[#BA3D47]">Home</span>
-        </Link>
-        <Link to="/alumni/post" className="flex flex-col items-center text-gray-600 hover:text-[#BA3D47] transition duration-300">
-          <div className="bg-[#930911] hover:bg-[#BA3D47] p-2.5 rounded-full transition duration-300 ease-in-out shadow-md transform hover:scale-105">
-            <Plus size={18} className="text-white" />
-          </div>
-          <span className="text-xxs mt-1 text-[#BA3D47]">Post</span>
-        </Link>
-        {/* Logout button: now opens modal */}
-        <div
-          onClick={() => setIsLogoutModalOpen(true)} // Open the modal on click
-          className="flex flex-col items-center text-gray-600 hover:text-[#BA3D47] transition duration-300 cursor-pointer"
-        >
-          <div className="bg-[#930911] hover:bg-[#BA3D47] p-2 rounded-full transition duration-300 ease-in-out shadow-md transform hover:scale-105">
-            <LogOut size={18} className="text-white" />
-          </div>
-          <span className="text-xxs mt-1 text-[#BA3D47]">Logout</span>
-        </div>
-      </div>
                             {/* Recent Activities (Posts) Section - Renamed and refined */}
                             <div className="bg-white shadow-lg rounded-lg p-6 border border-[#E4A39D]">
                                 <div className="flex justify-between items-center mb-3">
@@ -605,14 +505,13 @@ const AlumniProfile = () => {
                 </div>
             )}
 
-      {/* Logout Confirmation Modal */}
-      <LogoutConfirmationModal
-        isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)} // Close modal
-        onConfirm={handleLogout} // Handle logout and redirection
-      />
-    </div>
-  );
+            <LogoutConfirmationModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={handleLogout}
+            />
+        </div>
+    );
 };
 
 export default AlumniProfile;
