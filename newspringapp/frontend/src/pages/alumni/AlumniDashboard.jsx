@@ -116,11 +116,8 @@ const AlumniDashboard = () => {
 
   const handleLogout = () => {
     console.log("Logging out...");
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('username');
-    setIsLogoutModalOpen(false);
-    navigate('/pages/welcome');
+    setIsLogoutModalOpen(false); // Close the modal
+    navigate('/'); // Redirect to Welcome.jsx
   };
 
   return (

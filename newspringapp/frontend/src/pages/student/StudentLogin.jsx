@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home } from "lucide-react";
 import universityBg from "../../assets/unomstu1.jpg";
+import { loginStudent } from '../../services/studentService';
+
 
 const StudentLogin = () => {
   const [showForm, setShowForm] = useState(false);
@@ -17,12 +19,17 @@ const StudentLogin = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // TODO: Replace with actual login logic
-    alert(`Logging in with Email: ${email}`);
-    navigate("/student/dashboard");
+    try {
+      const response = await loginStudent({ email, password }); // 🔁 Calls service function
+      localStorage.setItem("studentName", response.name);       // ✅ Save student name
+      navigate("/student/dashboard");                            // 🔀 Redirect to dashboard
+    } catch (err) {
+      alert("Login failed: " + err);
+    }
   };
+
 
   return (
     <div

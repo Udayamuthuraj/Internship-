@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import unomLogo from '../assets/unomlogo.png';
 import backgroundImage from '../assets/unomstu1.jpg';
 
-import faculty1 from '../assets/HODsir.jpg';
+import faculty1 from '../assets/HODsir.png';
 import faculty2 from '../assets/LAVANYAmam.jpg';
 import faculty3 from '../assets/SORNAMmam.jpg';
 import faculty4 from '../assets/CHITHRAmam.jpg';
@@ -177,6 +177,7 @@ const WelcomePage = () => {
           <li><a href="/events" className="hover:text-[#BA3D47]">Events</a></li>
           <li><a href="/gallery" className="hover:text-[#BA3D47]">Gallery</a></li>
           <li><a href="/about" className="hover:text-[#BA3D47]">About</a></li>
+          <li><a href="/admin/login" className="hover:text-[#BA3D47]">Admin</a></li>
           <li><a href="/admin/Login" className="hover:text-[#BA3D47]">Admin</a></li>
         </ul>
       </motion.nav>
