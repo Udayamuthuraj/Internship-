@@ -27,38 +27,73 @@ const AlumniLogin = () => {
     setIsSuccess(false);
     setIsLoading(true);
 
+    // Basic client-side validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setMessage("Enter a valid email.");
-      setIsSuccess(false);
+      setMessage("Please enter a valid email address.");
       setIsLoading(false);
       return;
     }
     if (!password) {
       setMessage("Please enter your password.");
-      setIsSuccess(false);
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post('/api/alumni/login', {
-        username: email, // Sending email as username to backend
+      // API call to your backend
+      const response = await axios.post("http://localhost:8080/api/alumni/login", {
+        username: email,
         password: password
       });
 
-      setMessage(response.data.message || "Login successful!");
-      setIsSuccess(true);
-      console.log("Login Success:", response.data);
+      console.log("LOGIN RESPONSE:", response.data);
 
-      setTimeout(() => {
-        navigate("/alumni/dashboard"); // Redirect to dashboard on success
-      }, 1500);
+      // Verify essential data before saving
+      if (response.data && response.data.token && response.data.userId) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("uid", response.data.userId);
+        localStorage.setItem("username", response.data.username || '');
+        localStorage.setItem("userEmail", email);
 
+        setMessage("Login successful!");
+        setIsSuccess(true);
+
+        // Redirect after a short delay
+        setTimeout(() => navigate("/alumni/dashboard"), 1200);
+      } else {
+        throw new Error("Login successful, but missing authentication data from server.");
+      }
     } catch (error) {
-      console.error("Login failed:", error.response ? error.response.data : error.message);
-      setMessage(error.response?.data?.message || "Login failed. Please check your credentials.");
+      console.error('Login failed:', error.response ? error.response.data : error.message);
+      
+      // --- MODIFIED ERROR HANDLING LOGIC STARTS HERE ---
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error.response) {
+        // Check for specific HTTP status codes from the server
+        if (error.response.status === 403) {
+          // Status 403 (Forbidden) is often used for invalid credentials
+          errorMessage = "Invalid password";
+        } else if (error.response.status === 404) {
+          // Status 404 (Not Found) can be used to indicate the user doesn't exist
+          errorMessage = "Incorrect email address";
+        } else if (error.response.data && error.response.data.message) {
+          // Fallback to the backend's message if a status code doesn't match
+          errorMessage = error.response.data.message;
+        } else {
+          // Generic server error message
+          errorMessage = `Server error: Status ${error.response.status}`;
+        }
+      } else {
+        // Handle network errors (e.g., no internet, server is down)
+        errorMessage = "Could not connect to the server. Please check your network.";
+      }
+      
+      setMessage(errorMessage);
       setIsSuccess(false);
+      // --- MODIFIED ERROR HANDLING LOGIC ENDS HERE ---
+
     } finally {
       setIsLoading(false);
     }
@@ -80,38 +115,16 @@ const AlumniLogin = () => {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-2xl rounded-3xl px-10 py-12 max-w-lg w-full"
             >
-              <h2 className="text-4xl font-bold text-center text-[#930911] mb-8">
-                Alumni Login
-              </h2>
-
+              <h2 className="text-4xl font-bold text-center text-[#930911] mb-8">Alumni Login</h2>
               {message && (
                 <div className={`alert ${isSuccess ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} text-center mb-4 p-2 rounded`}>
                   {message}
                 </div>
               )}
-
               <form onSubmit={handleLogin} className="space-y-5">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="input-style"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="input-style"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-[#930911] text-white py-3 rounded-lg font-semibold hover:bg-[#BA3D47] transition duration-300"
-                  disabled={isLoading}
-                >
+                <input type="email" placeholder="Email" className="input-style" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <input type="password" placeholder="Password" className="input-style" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <button type="submit" className="w-full bg-[#930911] text-white py-3 rounded-lg font-semibold hover:bg-[#BA3D47] transition duration-300" disabled={isLoading}>
                   {isLoading ? 'Logging In...' : 'Login'}
                 </button>
               </form>

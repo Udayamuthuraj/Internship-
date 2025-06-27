@@ -63,11 +63,12 @@ function App() {
         <Route path="/alumni/posts" element={<AlumniAllPosts />} />
         <Route path="/alumni/profile" element={<AlumniProfile />} />
         <Route path="/alumni/editprofile" element={<AlumniEditProfile />} />
+        <Route path="/alumni/reset-password" element={<AlumniResetPassword />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path ="admin/register" element = {<AdminRegister/>}/>
+        <Route path="/admin/register" element={<AdminRegister />} />
    
         {/*event route */}
         <Route path= "/events" element ={<EventPage/>} />

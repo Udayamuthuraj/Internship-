@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import alumniBg from "../../assets/Alumnibg.jpg"; // Ensure this path is correct or replace with a public URL
+import alumniBg from "../../assets/Alumnibg.jpg"; 
 
 function PostModal({ isOpen, onClose, onPostSuccess }) {
   const navigate = useNavigate();
@@ -13,8 +13,9 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
   const [submitError, setSubmitError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const API_BASE_URL = "http://localhost:8080/api";
-  const currentUserId = localStorage.getItem('userId');
+  const API_BASE_URL = "http://localhost:8080";
+  const currentUserId = parseInt(localStorage.getItem('uid')); // Get userId from localStorage
+  const authToken = localStorage.getItem('token'); // Get JWT token from localStorage
 
   if (!isOpen) return null;
 
@@ -39,43 +40,59 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    if (!currentUserId) {
-        setSubmitError("User not logged in. Cannot create post.");
+    if (!currentUserId || isNaN(currentUserId)) {
+        setSubmitError("User ID is missing or invalid. Please log in again.");
         setIsSubmitting(false);
         return;
     }
 
+    if (!authToken) {
+        setSubmitError("Authentication token is missing. Please log in.");
+        setIsSubmitting(false);
+        return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
     try {
       const formData = new FormData();
-      formData.append('userId', currentUserId);
       formData.append('postText', postContent);
       if (selectedImage) {
-        formData.append('postPhoto', selectedImage);
+        formData.append('postImage', selectedImage); 
       }
-
-      const response = await fetch(`${API_BASE_URL}/posts`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${currentUserId}/posts/post`, {
         method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${authToken}`, 
+        },
         body: formData,
       });
 
-      const responseData = await response.json();
-
       if (!response.ok) {
-        throw new Error(responseData.message || `Failed to create post. Status: ${response.status}`);
+        const errorText = await response.text(); 
+        let errorMessage = `Failed to create post. Status: ${response.status}`;
+        try {
+            const errorJson = JSON.parse(errorText); // Try parsing as JSON
+            errorMessage = errorJson.message || errorMessage;
+        } catch (parseError) {
+            errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
-
+      const result = await response.json(); 
+      
       setShowSuccessMessage(true);
 
       setTimeout(() => {
         setShowSuccessMessage(false);
-        onClose();
-        onPostSuccess();
+        onClose(); // Close modal
+        onPostSuccess(); // Trigger parent success handler
+        // Reset form fields
         setPostContent('');
         setSelectedImage(null);
         setImagePreviewUrl('');
+        // Navigate to profile after successful post
         navigate('/alumni/profile');
       }, 1500);
 
@@ -92,7 +109,7 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4" >
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-auto p-6 relative transform transition-all sm:w-11/12 md:w-3/4 lg:w-1/2">
         <button
           onClick={onClose}
@@ -126,7 +143,7 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
               aria-label="Remove image"
               disabled={isSubmitting}
             >
-              &times; {/* Replaced Font Awesome with simple text */}
+              &times;
             </button>
           </div>
         )}
@@ -150,7 +167,7 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
             className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
-            📸 {/* Replaced Font Awesome with emoji */}
+            📸
             <span>Add Photo</span>
           </button>
 
@@ -166,7 +183,7 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
         {showSuccessMessage && (
           <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
             <div className="text-center text-green-600 font-bold text-xl flex flex-col items-center">
-              ✅ {/* Replaced Font Awesome with emoji */}
+              ✅
               Post Submitted Successfully!
             </div>
           </div>
@@ -176,7 +193,7 @@ function PostModal({ isOpen, onClose, onPostSuccess }) {
   );
 }
 
-export default function App() {
+export default function AlumniPostPageWrapper() { 
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -199,8 +216,15 @@ export default function App() {
   return (
     <div
       className="min-h-screen bg-cover bg-center flex items-center justify-center p-4 font-sans opacity-80"
-      style={{ backgroundImage: `url(https://placehold.co/1200x800/FFE9D4/BA3D47?text=University+Background)` }} // Replaced local image import
+      style={{ backgroundImage: `url(${alumniBg})` }} 
     >
+      <button
+        onClick={navigateToDashboard}
+        className="absolute top-4 right-4 bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors duration-200 z-50 text-2xl" // Tailwind classes for positioning and styling
+        aria-label="Go to Dashboard"
+      >
+        🏠
+      </button>
       <div className="text-center bg-white bg-opacity-90 p-8 rounded-lg shadow-xl max-w-lg w-full transform transition-all duration-300 hover:scale-[1.01] border border-gray-200">
         <h1 className="text-4xl md:text-5xl font-extrabold text-[#BA3D47] mb-4 drop-shadow-md leading-tight">
           CREATE YOUR POST
