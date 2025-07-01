@@ -50,4 +50,7 @@ public class Alumni {
 
     @Column(name = "linkedin_url")
     private String linkedinUrl;
+
+    @Column(name = "background_photo")
+    private byte[] backgroundPhoto;
 }

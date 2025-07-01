@@ -4,11 +4,9 @@ import com.example.demo.dto.alumni.AlumniRegisterDTO;
 import com.example.demo.dto.alumni.LoginRequest;
 import com.example.demo.model.alumni.Alumni;
 import com.example.demo.repository.alumni.AlumniRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.Optional;
 import java.util.List;
 
@@ -33,7 +31,6 @@ public class AlumniService {
         alumni.setUemail(dto.getUemail());
         alumni.setUpassword(passwordEncoder.encode(dto.getUpassword())); // Hashed password
 
-        // Set default values for profile fields to prevent SQLIntegrityConstraintViolationException
         alumni.setNumOfAwards(0);
         alumni.setNumOfProjects(0);
         alumni.setSummary("");
@@ -50,25 +47,20 @@ public class AlumniService {
         return "Alumni Registration successful!";
     }
 
-    // Manual login check (This method is correct for matching passwords)
     public boolean loginAlumni(LoginRequest loginRequest) {
         Optional<Alumni> alumniOptional = alumniRepository.findByUemail(loginRequest.getUsername());
         if (alumniOptional.isEmpty()) {
             return false;
         }
         Alumni alumni = alumniOptional.get();
-        // Use matches() to compare raw password with encoded password
         return passwordEncoder.matches(loginRequest.getPassword(), alumni.getUpassword());
     }
 
-    // Get alumni by ID
     public Optional<Alumni> getAlumniById(Long id) {
         return alumniRepository.findById(id);
     }
 
-
     public Alumni registerAlumni(Alumni alumni) {
-        // Only encode if the password is provided and doesn't look like an already encoded BCrypt hash
         if (alumni.getUpassword() != null && !alumni.getUpassword().isEmpty() && !alumni.getUpassword().startsWith("$2a$")) {
             alumni.setUpassword(passwordEncoder.encode(alumni.getUpassword()));
         }
@@ -76,7 +68,6 @@ public class AlumniService {
     }
 
     public Alumni updateProfile(Alumni updatedAlumni) {
-        // 1. Fetch the existing alumni from the database
         Optional<Alumni> existingAlumniOptional = alumniRepository.findById(updatedAlumni.getUid());
 
         if (existingAlumniOptional.isEmpty()) {
@@ -96,13 +87,17 @@ public class AlumniService {
         
         if (updatedAlumni.getSummary() != null) existingAlumni.setSummary(updatedAlumni.getSummary());
         if (updatedAlumni.getSpecializations() != null) existingAlumni.setSpecializations(updatedAlumni.getSpecializations());
-        if (updatedAlumni.getProfilePhotoUrl() != null) existingAlumni.setProfilePhotoUrl(updatedAlumni.getProfilePhotoUrl()); // This is set by the controller directly
+        if (updatedAlumni.getProfilePhotoUrl() != null) existingAlumni.setProfilePhotoUrl(updatedAlumni.getProfilePhotoUrl()); 
         if (updatedAlumni.getFacebookUrl() != null) existingAlumni.setFacebookUrl(updatedAlumni.getFacebookUrl());
         if (updatedAlumni.getInstagramUrl() != null) existingAlumni.setInstagramUrl(updatedAlumni.getInstagramUrl());
         if (updatedAlumni.getLinkedinUrl() != null) existingAlumni.setLinkedinUrl(updatedAlumni.getLinkedinUrl());
 
+        if (updatedAlumni.getBackgroundPhoto() != null) {
+            existingAlumni.setBackgroundPhoto(updatedAlumni.getBackgroundPhoto());
+        }
+
         if (updatedAlumni.getUpassword() != null && !updatedAlumni.getUpassword().isEmpty()) {
-            if (!updatedAlumni.getUpassword().startsWith("$2a$") && !updatedAlumni.getUpassword().startsWith("$2b$") && !updatedAlumni.getUpassword().startsWith("$2y$")) { // Added $2b$ and $2y$ for BCrypt variations
+            if (!updatedAlumni.getUpassword().startsWith("$2a$") && !updatedAlumni.getUpassword().startsWith("$2b$") && !updatedAlumni.getUpassword().startsWith("$2y$")) { 
                 existingAlumni.setUpassword(passwordEncoder.encode(updatedAlumni.getUpassword()));
             } else {
                 existingAlumni.setUpassword(updatedAlumni.getUpassword());
@@ -111,13 +106,10 @@ public class AlumniService {
         return alumniRepository.save(existingAlumni);
     }
 
-
-    // Find by email
     public Optional<Alumni> findByUemail(String uemail) {
         return alumniRepository.findByUemail(uemail);
     }
 
-    // Search alumni by name (partial match, case-insensitive)
     public List<Alumni> searchAlumniByUname(String uname) {
         return alumniRepository.findByUnameContainingIgnoreCase(uname);
     }

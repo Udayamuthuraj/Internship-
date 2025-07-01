@@ -56,14 +56,9 @@ public class AlumniController {
             )
         );
 
-        // If authentication is successful, retrieve the Alumni entity
         Alumni alumni = alumniRepository.findByUemail(loginRequest.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found after successful authentication. This should not happen.")); // Should not be reached if authenticate succeeds
-
-        // Generate JWT token
         String token = jwtUtil.generateToken(alumni.getUemail());
-
-        // Return login response including token, user ID, and username
         return ResponseEntity.ok(new LoginResponse(token, alumni.getUid(), alumni.getUname()));
     }
 
@@ -78,10 +73,11 @@ public class AlumniController {
     @PutMapping("/{id}/profile")
     public ResponseEntity<?> updateProfile(
             @PathVariable Long id,
-            @ModelAttribute Alumni updatedAlumniData, // Data from the form
+            @ModelAttribute Alumni updatedAlumniData, 
+            @RequestParam(value = "uploadedBackgroundImage", required = false) MultipartFile backgroundPhotoFile,
             @RequestParam(value = "uploadedProfileImage", required = false) MultipartFile profilePhotoFile) {
+            
 
-        // 1. Fetch the existing alumni from the database
         Optional<Alumni> existingAlumniOptional = alumniService.getAlumniById(id);
         if (existingAlumniOptional.isEmpty()) {
             return ResponseEntity.notFound().build(); // Or return a specific error message
@@ -90,7 +86,6 @@ public class AlumniController {
 
         BeanUtils.copyProperties(updatedAlumniData, existingAlumni, "uid", "upassword", "profilePhotoUrl");
 
-        // 3. Handle profile photo upload if a new file is provided
         if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
             try {
                 String uploadedUrl = fileStorageService.save(profilePhotoFile, "profiles");
@@ -102,7 +97,16 @@ public class AlumniController {
             }
         }
 
-        alumniService.updateProfile(existingAlumni); // Pass the merged object
+        if (backgroundPhotoFile != null && !backgroundPhotoFile.isEmpty()) {
+            try {
+                existingAlumni.setBackgroundPhoto(backgroundPhotoFile.getBytes());
+            } catch (Exception e) {
+                System.err.println("Error uploading background image: " + e.getMessage());
+                return ResponseEntity.badRequest().body("Failed to upload background image: " + e.getMessage());
+            }
+        }
+
+        alumniService.updateProfile(existingAlumni);
 
         return ResponseEntity.ok("Profile updated successfully");
     }
