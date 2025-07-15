@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import { FaInstagram, FaTwitter, FaEnvelope, FaRobot, FaTimes, FaCommentDots } from 'react-icons/fa'; // FaCommentDots imported
-import { motion, AnimatePresence } from 'framer-motion'; // AnimatePresence imported
+import { FaInstagram, FaTwitter, FaEnvelope, FaRobot, FaTimes, FaCommentDots } from 'react-icons/fa'; 
+import { motion, AnimatePresence } from 'framer-motion'; 
 import { Link } from 'react-router-dom';
 
 import unomLogo from '../assets/unomlogo.png';
@@ -68,11 +68,12 @@ const WelcomePage = () => {
   const [messages, setMessages] = useState([{ text: "Hi there! How can I help you today?", from: "bot" }]);
   const [userInput, setUserInput] = useState("");
   const target = 1245;
+  const [popup, setPopup] = useState({ message: '', type: '' });
 
   const [feedback, setFeedback] = useState({ name: '', email: '', message: '' });
-  const [feedbackDisplayOpen, setFeedbackDisplayOpen] = useState(false); // New state for displaying feedback
-  const [feedbackList, setFeedbackList] = useState([]); // State to store fetched feedback
-  const [feedbackSuccess, setFeedbackSuccess] = useState(false); // To trigger refetch of feedback after submission
+  const [feedbackDisplayOpen, setFeedbackDisplayOpen] = useState(false); 
+  const [feedbackList, setFeedbackList] = useState([]); 
+  const [floatingFeedback, setFloatingFeedback] = useState([]);
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
@@ -92,66 +93,165 @@ const WelcomePage = () => {
     }, 10);
     return () => clearInterval(counter);
   }, []);
-
-  // Fetch feedback on component mount and after new feedback submission
+  
   useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/api/feedback');
-        if (response.ok) {
-          const data = await response.json();
-          setFeedbackList(data);
-        } else {
-          console.error("Failed to fetch feedback.");
-        }
-      } catch (error) {
-        console.error("Error fetching feedback:", error);
-      }
-    };
-
-    fetchFeedback();
-  }, [feedbackSuccess]); // Refetch when feedbackSuccess changes (i.e., after a new submission)
+  if (popup.message) {
+    const timer = setTimeout(() => {
+      setPopup({ message: '', type: '' });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }
+}, [popup]);
 
 
-  const sendMessage = () => {
-    if (!userInput.trim()) return;
-    const newMessages = [...messages, { text: userInput, from: "user" }];
-    setMessages(newMessages);
-    setUserInput("");
-    setTimeout(() => {
-      setMessages(prev => [...prev, { text: "Thanks for reaching out. We'll get back soon!", from: "bot" }]);
-    }, 1000);
-  };
+
+useEffect(() => {
+  const fetchFeedback = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/feedback/all');
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Fetched Feedback:", data); // 👈 log it
+      setFeedbackList(data);
+      setFloatingFeedback(data);
+    } else {
+      console.error("Failed to fetch feedback.");
+    }
+  } catch (error) {
+    console.error("Error fetching feedback:", error);
+  }
+};
+
+
+  fetchFeedback(); 
+}, []);
+
+useEffect(() => {
+  if (floatingFeedback.length > 0) {
+    const timer = setTimeout(() => {
+      setFloatingFeedback((prev) => prev.slice(1)); 
+    }, 2000); 
+
+    return () => clearTimeout(timer);
+  }
+}, [floatingFeedback]);
+
+
+const sendMessage = async () => {
+  if (!userInput.trim()) return;
+
+  const newMessages = [...messages, { text: userInput, from: "user" }];
+  setMessages(newMessages);
+  setUserInput("");
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/ask", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ question: userInput }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    setMessages((prev) => [...prev, { text: data.answer, from: "bot" }]);
+  } catch (error) {
+    console.error("Error fetching chatbot response:", error);
+    setMessages((prev) => [...prev, { text: "Oops! Something went wrong. Please try again.", from: "bot" }]);
+  }
+};
 
   const handleFeedbackChange = (e) => {
-    const { name, value } = e.target;
-    setFeedback({ ...feedback, [name]: value });
-  };
+  const { name, value } = e.target;
 
-  const submitFeedback = async () => {
-    if (!feedback.name || !feedback.email || !feedback.message) {
-      alert("Please fill in all fields.");
-      return;
+  if (name === "email") {
+    const isValid = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(value);
+    setFeedback((prev) => ({
+      ...prev,
+      [name]: value,
+      emailError: isValid ? "" : "Invalid email format!",
+    }));
+  } else {
+    setFeedback((prev) => ({
+      ...prev,
+      [name]: value,
+      emailError: prev.emailError,
+    }));
+  }
+};
+
+const fetchFeedback = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/feedback/all');
+    if (response.ok) {
+      const data = await response.json();
+      setFeedbackList(data);
+      setFloatingFeedback(
+  data.map((fb, i) => ({
+    ...fb,
+    _key: `${fb.email}-${Date.now()}-${i}`  
+  }))
+);
+
+    } else {
+      console.error("Failed to fetch feedback.");
     }
+  } catch (error) {
+    console.error("Error fetching feedback:", error);
+  }
+};
 
-    try {
-      const response = await fetch('http://localhost:8080/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(feedback),
-      });
-      if (response.ok) {
-  setShowSuccessPopup(true);          // Show popup
-  setFeedback({ name: '', email: '', message: '' });  // Clear form
-  setFeedbackSuccess(prev => !prev); // Trigger refetch
-} else {
-  alert("Failed to submit feedback.");
-}
 
-    } catch (error) {
-      alert("Error submitting feedback. Please try again.");
+useEffect(() => {
+  fetchFeedback();
+}, []);
+
+
+useEffect(() => {
+  if (floatingFeedback.length > 0) {
+    const timer = setTimeout(() => {
+      setFloatingFeedback((prev) => prev.slice(1));
+    }, 2000);
+    return () => clearTimeout(timer);
+  }
+}, [floatingFeedback]);
+
+
+const submitFeedback = async () => {
+  if (!feedback.name || !feedback.email || !feedback.message) {
+    setPopup({ message: 'Please fill in all fields.', type: 'error' });
+    return;
+  }
+
+  if (feedback.emailError) {
+    setPopup({ message: 'Please provide a valid email.', type: 'error' });
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:8080/api/feedback/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(feedback),
+    });
+
+    if (response.ok) {
+      setShowSuccessPopup(true);
+      setFeedback({ name: '', email: '', message: '' });
+
+      await fetchFeedback();
+    } else {
+      setPopup({ message: 'Failed to submit feedback.', type: 'error' });
     }
-  };
+  } catch (error) {
+    setPopup({ message: 'Error submitting feedback. Please try again.', type: 'error' });
+  }
+};
+
 
   return (
     <div
@@ -176,12 +276,9 @@ const WelcomePage = () => {
         <ul className="flex space-x-6 font-semibold text-[#930911]">
           <li><a href="/events" className="hover:text-[#BA3D47]">Events</a></li>
           <li><a href="/gallery" className="hover:text-[#BA3D47]">Gallery</a></li>
-          <li><a href="/about" className="hover:text-[#BA3D47]">About</a></li>
-<<<<<<< HEAD
-          <li><a href="/admin" className="hover:text-[#BA3D47]">Admin</a></li>
-=======
+          <li><a href="/videos" className="hover:text-[#BA3D47]">Videos</a></li>
+          <li><a href="/mambers" className="hover:text-[#BA3D47]">Members</a></li>
           <li><a href="/admin/login" className="hover:text-[#BA3D47]">Admin</a></li>
->>>>>>> aa5ea29 (Initial commit)
         </ul>
       </motion.nav>
 
@@ -302,6 +399,7 @@ const WelcomePage = () => {
             onChange={handleFeedbackChange}
             className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#930911]"
           />
+          {feedback.emailError && <p className="text-red-500 text-sm">{feedback.emailError}</p>}
           <textarea
             name="message"
             placeholder="Your Message"
@@ -319,12 +417,12 @@ const WelcomePage = () => {
         </div>
       </section>
 
-      {/* Contact Section (Original - social media icons here) */}
+
       <section className="bg-white bg-opacity-30 backdrop-blur-sm py-16 text-center rounded-xl max-w-4xl mx-auto shadow-lg mt-12">
         <h3 className="text-3xl font-semibold text-[#930911] mb-6">Connect With Us</h3>
         <div className="flex justify-center gap-10 text-3xl text-[#930911]">
-          {/* These are your social media icons, untouched as per your original code */}
-          <a href="mailto:csitaa@university.edu" className="hover:text-[#BA3D47] transition"><FaEnvelope /></a>
+
+          <a href="mailto:csitaa2025@gmail.com" className="hover:text-[#BA3D47] transition"><FaEnvelope /></a>
           <a href="https://www.instagram.com/_csitaa_/" className="hover:text-[#BA3D47] transition"><FaInstagram /></a>
           <a href="https://twitter.com/CSITAA" className="hover:text-[#BA3D47] transition"><FaTwitter /></a>
         </div>
@@ -335,9 +433,29 @@ const WelcomePage = () => {
         &copy; 2025 CSITAA – All rights reserved.
       </footer>
 
+{/* Floating Feedback Messages */}
+<AnimatePresence>
+  {floatingFeedback.length > 0 && (
+    <motion.div
+      key={floatingFeedback[0].id} 
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 1, ease: "easeInOut" }}
+      className="fixed bottom-40 right-8 bg-white bg-opacity-30 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg max-w-80 w-full"
+    >
+      <p className="font-semibold text-[#930911]">
+        {floatingFeedback[0].name || "Anonymous"} {/* fallback */}
+      </p>
+      <p className="text-sm text-gray-700">{floatingFeedback[0].message}</p>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
       {/* Chatbot Button */}
       <motion.button
-        animate={{ y: [-5, 5] }} // Floating animation
+        animate={{ y: [-5, 5] }} 
         transition={{
           y: {
             repeat: Infinity,
@@ -355,11 +473,11 @@ const WelcomePage = () => {
 
       {/* Feedback Icon to View Feedback */}
       <motion.button
-        animate={{ y: [-5, 5] }} // Floating animation, similar to chatbot
+        animate={{ y: [-5, 5] }} 
         transition={{
           y: {
             repeat: Infinity,
-            duration: 1.2, // Slightly different duration for visual variety
+            duration: 1, 
             ease: "easeInOut",
             repeatType: "mirror",
           },
@@ -382,7 +500,7 @@ const WelcomePage = () => {
             className="fixed bottom-36 right-8 z-50 w-80 max-w-full h-96 bg-white rounded-xl shadow-2xl flex flex-col"
           >
             <div className="flex justify-between items-center bg-[#930911] rounded-t-xl p-3 text-white">
-              <h4 className="font-bold">Alumni Chatbot</h4>
+              <h4 className="font-bold">Chatbot</h4>
               <button
                 onClick={() => setChatOpen(false)}
                 aria-label="Close Chatbot"
@@ -435,54 +553,43 @@ const WelcomePage = () => {
 <AnimatePresence>
   {feedbackDisplayOpen && (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 40 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-      aria-modal="true"
-      role="dialog"
-      aria-labelledby="feedback-modal-title"
+  initial={{ opacity: 0, y: 60 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: 60 }}
+  transition={{ duration: 0.3 }}
+  className="fixed bottom-36 right-8 z-50 w-80 h-96 bg-white rounded-xl shadow-2xl flex flex-col"
+  aria-modal="true"
+  role="dialog"
+  aria-labelledby="feedback-modal-title"
+>
+  <div className="flex justify-between items-center bg-[#930911] rounded-t-xl p-3 text-white">
+    <h4 className="font-bold">User Feedback</h4>
+    <button
+      onClick={() => setFeedbackDisplayOpen(false)}
+      className="hover:text-[#BA3D47]"
     >
-      <motion.div
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.8 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 relative"
-      >
-        <h3
-          id="feedback-modal-title"
-          className="text-2xl font-semibold text-[#930911] mb-4"
-        >
-          User Feedback
-        </h3>
-        <button
-          onClick={() => setFeedbackDisplayOpen(false)}
-          aria-label="Close Feedback Display"
-          className="absolute top-4 right-4 text-[#930911] hover:text-[#BA3D47] focus:outline-none"
-        >
-          <FaTimes size={24} />
-        </button>
+      <FaTimes size={20} />
+    </button>
+  </div>
 
-        {feedbackList.length === 0 ? (
-          <p className="text-gray-600">No feedback available.</p>
-        ) : (
-          <ul className="space-y-4">
-            {feedbackList.map((fb) => (
-              <li
-                key={fb.id || fb._id || fb.email + fb.name}
-                className="border border-[#EEC8B9] rounded-lg p-4 bg-[#FFE9D4]"
-              >
-                <p className="font-semibold text-[#930911]">{fb.name}</p>
-                <p className="text-sm text-[#BA3D47] mb-2">{fb.email}</p>
-                <p className="text-gray-700 whitespace-pre-line">{fb.message}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </motion.div>
-    </motion.div>
+  <div className="flex flex-col w-80 h-96 bg-white rounded-xl shadow-2xl p-6 overflow-y-auto">
+    {feedbackList.length === 0 ? (
+      <p className="text-gray-600">No feedback available.</p>
+    ) : (
+      <ul className="space-y-4">
+        {feedbackList.map((fb) => (
+  <li key={fb.id || fb.email || fb.name} className="max-w-[70%] px-3 py-2 rounded-lg bg-[#BA3D47] text-white">
+    <p className="font-semibold">{fb.name}</p>
+    <p className="text-gray-200 text-sm">{fb.email}</p>
+    <p className="whitespace-pre-line">{fb.message}</p>
+  </li>
+))}
+
+      </ul>
+    )}
+  </div>
+</motion.div>
+
   )}
 </AnimatePresence>
 
@@ -494,11 +601,11 @@ const WelcomePage = () => {
       exit={{ opacity: 0, scale: 0.75 }}
       transition={{ duration: 0.3 }}
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-60"
-      onClick={() => setShowSuccessPopup(false)} // Close on clicking outside
+      onClick={() => setShowSuccessPopup(false)} 
     >
       <motion.div
         className="bg-white rounded-lg p-8 max-w-sm mx-4 text-center shadow-lg"
-        onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside popup
+        onClick={(e) => e.stopPropagation()} 
       >
         <h2 className="text-2xl font-semibold mb-4 text-[#930911]">Thank You!</h2>
         <p className="mb-6">Your feedback has been submitted successfully.</p>
@@ -513,6 +620,14 @@ const WelcomePage = () => {
   )}
 </AnimatePresence>
 
+{popup.message && (
+  <div
+    className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-md text-white z-50 transition-all duration-300
+      ${popup.type === 'error' ? 'bg-red-600' : 'bg-green-600'}`}
+  >
+    {popup.message}
+  </div>
+)}
     </div>
   );
 };
