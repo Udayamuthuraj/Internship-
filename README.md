@@ -1,4 +1,0 @@
-# Internship-
-Alumni Connect Portal -
-We excited to present our project titled Alumni Connect Portal. This is a full-stack web application developed using Spring Boot and designed to bridge the gap between alumni, students, and the institution. The platform consists of three main sections: Student, Alumni, and Admin. Students and alumni can register, log in, and interact through dedicated dashboards, while the admin manages events, galleries, and broadcasts emails. The portal also features an AI-powered chatbot for assistance. The goal is to foster stronger alumni engagement and provide students with mentorship, career insights, and networking opportunities through an intuitive, secure, and scalable system.
-validate merge - PR pull request
